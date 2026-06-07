@@ -17609,7 +17609,7 @@ const DEFAULT_MASTER_DATA = [
   {
     "name": "凛御シルバーアッシュ",
     "star": "6",
-    "rank": "A",
+    "rank": "SS",
     "jobGroup": "先鋒",
     "job": "策士",
     "cost": "13",
