@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アークナイツオペレーターデータベース マニュアル</title>
+
+<style>
+:root{
+    --main:#4a6572;
+    --sub:#607d8b;
+    --bg:#eef3f6;
+    --card:#ffffff;
+    --border:#d0d7dd;
+    --text:#2c3e50;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+body{
+    margin:0;
+    font-family:"Yu Gothic","Meiryo",sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.8;
+}
+
+header{
+    background:var(--main);
+    color:#fff;
+    padding:32px;
+}
+
+header h1{
+    margin:0;
+}
+
+.container{
+    max-width:1200px;
+    margin:auto;
+    padding:30px;
+}
+
+.card{
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:24px;
+    margin-bottom:24px;
+}
+
+h2{
+    border-left:6px solid var(--main);
+    padding-left:12px;
+    margin-top:0;
+}
+
+h3{
+    color:var(--main);
+}
+
+a{
+    color:var(--main);
+    text-decoration:none;
+}
+
+a:hover{
+    text-decoration:underline;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:10px;
+}
+
+th,td{
+    border:1px solid var(--border);
+    padding:10px;
+}
+
+th{
+    background:#f4f7f9;
+}
+
+.step{
+    background:#f8fafb;
+    border-left:5px solid var(--main);
+    padding:12px;
+    margin:12px 0;
+}
+
+.tip{
+    background:#e8f5e9;
+    border-left:5px solid #4caf50;
+    padding:12px;
+    margin:12px 0;
+}
+
+footer{
+    text-align:center;
+    color:#607d8b;
+    padding:20px;
+}
+</style>
+
+</head>
+
+<body>
+
+<header>
+<h1>アークナイツオペレーターデータベース</h1>
+<p>操作マニュアル</p>
+</header>
+
+<div class="container">
+
+<div class="card">
+<h2>目次</h2>
+
+<ol>
+<li><a href="#overview">システム概要</a></li>
+<li><a href="#screen">画面構成</a></li>
+<li><a href="#basic">基本操作</a></li>
+<li><a href="#quick">クイックフィルター</a></li>
+<li><a href="#sort">並び替え</a></li>
+<li><a href="#page">ページ切替</a></li>
+<li><a href="#column">列表示設定</a></li>
+<li><a href="#json">JSON出力</a></li>
+<li><a href="#theme">テーマ切替</a></li>
+<li><a href="#save">保存される設定</a></li>
+</ol>
+</div>
+
+<div class="card" id="overview">
+<h2>1. システム概要</h2>
+
+<p>
+アークナイツのオペレーター情報やスキル情報を検索・閲覧するためのデータベースです。
+</p>
+
+<p>
+複数条件による絞り込み、スキル検索、列表示カスタマイズ、テーマ切替などの機能を利用できます。
+</p>
+
+</div>
+
+<div class="card" id="screen">
+<h2>2. 画面構成</h2>
+
+<table>
+<tr>
+<th>エリア</th>
+<th>内容</th>
+</tr>
+
+<tr>
+<td>ヘッダー</td>
+<td>テーマ切替、列表示設定、JSON出力、ヘルプを実行します。</td>
+</tr>
+
+<tr>
+<td>検索エリア</td>
+<td>検索条件を指定します。</td>
+</tr>
+
+<tr>
+<td>表示件数</td>
+<td>1ページに表示する件数を変更します。</td>
+</tr>
+
+<tr>
+<td>ページナビゲーション</td>
+<td>検索結果のページを切り替えます。</td>
+</tr>
+
+<tr>
+<td>一覧表</td>
+<td>検索結果を表示します。</td>
+</tr>
+
+</table>
+
+</div>
+
+<div class="card" id="basic">
+<h2>3. 基本操作</h2>
+
+<h3>3-1. キーワード検索</h3>
+
+<p>
+キーワード欄に文字を入力すると、リアルタイムで検索結果が更新されます。
+</p>
+
+<div class="step">
+① キーワード欄に文字を入力<br>
+② 検索結果を確認
+</div>
+
+<p>検索対象</p>
+
+<ul>
+<li>オペレーター名</li>
+<li>スキル名</li>
+<li>スキル説明</li>
+</ul>
+
+<h3>3-2. 条件検索</h3>
+
+<p>
+各条件を選択して検索できます。
+</p>
+
+<ul>
+<li>★</li>
+<li>ランク</li>
+<li>職業</li>
+<li>職分</li>
+<li>コスト</li>
+<li>ブロック数</li>
+<li>再配置</li>
+<li>攻撃速度</li>
+<li>入手方法</li>
+<li>募集タグ</li>
+<li>SP型</li>
+<li>発動方式</li>
+<li>スキルタグ</li>
+</ul>
+
+<div class="step">
+① 条件を選択<br>
+② 必要に応じて複数条件を追加<br>
+③ 検索結果を確認
+</div>
+
+<div class="tip">
+例：★6 ＋ 前衛 ＋ 手動発動
+</div>
+
+<h3>3-3. 検索条件リセット</h3>
+
+<p>
+「検索条件リセット」を押すと、すべての検索条件が解除されます。
+</p>
+
+<div class="step">
+① 検索条件リセットを押す<br>
+② 全条件が解除される
+</div>
+
+</div>
+
+<div class="card" id="quick">
+<h2>4. クイックフィルター</h2>
+
+<p>
+一覧内の項目をクリックすると、その値で絞り込みできます。
+</p>
+
+<table>
+<tr>
+<th>クリック対象</th>
+<th>動作</th>
+</tr>
+
+<tr>
+<td>職業</td>
+<td>同じ職業で絞り込み</td>
+</tr>
+
+<tr>
+<td>職分</td>
+<td>同じ職分で絞り込み</td>
+</tr>
+
+<tr>
+<td>入手方法</td>
+<td>同じ入手方法で絞り込み</td>
+</tr>
+
+<tr>
+<td>募集タグ</td>
+<td>同じタグで絞り込み</td>
+</tr>
+
+<tr>
+<td>スキルタグ</td>
+<td>同じタグで絞り込み</td>
+</tr>
+
+</table>
+
+<div class="step">
+① 一覧の項目をクリック<br>
+② 検索条件へ追加<br>
+③ 自動で再検索
+</div>
+
+</div>
+
+<div class="card" id="sort">
+<h2>5. 並び替え</h2>
+
+<p>
+列見出しをクリックすると並び替えできます。
+</p>
+
+<table>
+<tr>
+<th>操作</th>
+<th>結果</th>
+</tr>
+
+<tr>
+<td>1回クリック</td>
+<td>昇順</td>
+</tr>
+
+<tr>
+<td>再クリック</td>
+<td>降順</td>
+</tr>
+
+</table>
+
+<div class="step">
+① 並び替えたい列名をクリック<br>
+② 昇順または降順で表示
+</div>
+
+</div>
+
+<div class="card" id="page">
+<h2>6. ページ切替</h2>
+
+<h3>表示件数変更</h3>
+
+<ul>
+<li>10件</li>
+<li>20件</li>
+<li>50件</li>
+<li>100件</li>
+<li>全件</li>
+</ul>
+
+<div class="step">
+① 表示件数を選択<br>
+② 一覧が再表示される
+</div>
+
+<h3>ページ移動</h3>
+
+<div class="step">
+① ◀ ▶ ボタンを押す<br>
+または<br>
+② ページ番号を押す
+</div>
+
+</div>
+
+<div class="card" id="column">
+<h2>7. 列表示設定</h2>
+
+<p>
+表示する列や列順を変更できます。
+</p>
+
+<h3>表示・非表示</h3>
+
+<div class="step">
+① 「⚙ 列表示設定」を押す<br>
+② 表示したい列にチェック<br>
+③ 保存を押す
+</div>
+
+<h3>列順変更</h3>
+
+<div class="step">
+① 列名をドラッグ<br>
+② 任意の位置へ移動<br>
+③ 保存を押す
+</div>
+
+</div>
+
+<div class="card" id="json">
+<h2>8. JSON出力</h2>
+
+<p>
+現在のデータをJSONファイルとして保存できます。
+</p>
+
+<div class="step">
+① 「JSON出力」を押す<br>
+② JSONファイルを保存
+</div>
+
+<p>
+バックアップやデータ保管に利用できます。
+</p>
+
+</div>
+
+<div class="card" id="theme">
+<h2>9. テーマ切替</h2>
+
+<p>
+画面表示をライトモードとダークモードで切り替えられます。
+</p>
+
+<div class="step">
+① 「🌓 テーマ切替」を押す<br>
+② 表示テーマが切り替わる
+</div>
+
+<table>
+<tr>
+<th>テーマ</th>
+<th>説明</th>
+</tr>
+
+<tr>
+<td>ライトモード</td>
+<td>明るい背景</td>
+</tr>
+
+<tr>
+<td>ダークモード</td>
+<td>暗い背景</td>
+</tr>
+
+</table>
+
+</div>
+
+<div class="card" id="save">
+<h2>10. 保存される設定</h2>
+
+<p>
+以下の設定はブラウザに保存され、次回起動時にも引き継がれます。
+</p>
+
+<table>
+<tr>
+<th>設定</th>
+<th>保存</th>
+</tr>
+
+<tr>
+<td>テーマ設定</td>
+<td>〇</td>
+</tr>
+
+<tr>
+<td>表示件数</td>
+<td>〇</td>
+</tr>
+
+<tr>
+<td>列表示設定</td>
+<td>〇</td>
+</tr>
+
+</table>
+
+</div>
+
+</div>
+
+<footer>
+アークナイツオペレーターデータベース 操作マニュアル
+</footer>
+
+</body>
+</html>

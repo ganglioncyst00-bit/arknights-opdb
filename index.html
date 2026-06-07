@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>アークナイツオペレーターデータベース</title>
+    <link rel="icon" type="image/png" href="アークナイツ.png">
+    <style>
+        :root { --bg-body: #d9e6eb; --bg-content: rgba(255, 255, 255, 0.85); --bg-card: rgba(255, 255, 255, 0.7); --bg-table: #ffffff; --bg-header: #4a6572; --bg-input: rgba(255, 255, 255, 0.9); --text-main: #2c3e50; --text-sub: #5c768d; --border-color: rgba(207, 218, 223, 0.6); --row-hover: #f4f8fa; --modal-bg: white; }
+        [data-theme="dark"] { --bg-body: #1a262b; --bg-content: rgba(38, 50, 56, 0.9); --bg-card: rgba(44, 62, 80, 0.7); --bg-table: #263238; --bg-header: #37474f; --bg-input: #37474f; --text-main: #eceff1; --text-sub: #b0bec5; --border-color: rgba(0, 0, 0, 0.3); --row-hover: #2f3d44; --modal-bg: #263238; }
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: var(--bg-body); display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; line-height: 1.5; color: var(--text-main); }
+        h1 { color: var(--text-main); padding: 16px 24px; margin: 0; font-size: 1.6em; font-weight: 700; background: var(--bg-content); backdrop-filter: blur(8px); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
+        .title-left { display: flex; align-items: center; gap: 12px; }
+        .title-logo { height: 36px; width: auto; object-fit: contain; border-radius: 6px; }
+        .top-section { padding: 16px 24px; flex-shrink: 0; background: var(--bg-body); overflow: visible; z-index: 100; }
+        .search-container { background: var(--bg-card); backdrop-filter: blur(12px); padding: 20px; border-radius: 14px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1); border: 1px solid var(--border-color); position: relative; z-index: 101; }
+        .search-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+        .search-item { display: flex; flex-direction: column; gap: 5px; position: relative; }
+        .search-item label { font-size: 0.78em; font-weight: 700; color: var(--text-sub); }
+        .chip-container { min-height: 36px; padding: 3px 32px 3px 8px; border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; background: var(--bg-input); cursor: pointer; position: relative; }
+        .chip { background-color: #5c768d; color: white; padding: 3px 8px; border-radius: 6px; display: flex; align-items: center; font-size: 0.9em; }
+        .chip .remove-chip { cursor: pointer; margin-right: 6px; border-right: 1px solid rgba(255,255,255,0.3); padding-right: 6px; }
+        .placeholder { color: #90a4ae; font-size: 0.85em; }
+        .input-wrapper { position: relative; display: flex; align-items: center; width: 100%; }
+        .input-wrapper input { width: 100%; padding: 8px 32px 8px 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.9em; box-sizing: border-box; background: var(--bg-input); color: var(--text-main); }
+        .main-clear-btn { position: absolute; right: 10px; cursor: pointer; font-weight: bold; color: #b0bec5; }
+        .search-footer { display: flex; justify-content: flex-end; align-items: center; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
+        .search-count { font-size: 0.95em; font-weight: 700; color: var(--text-main); background: rgba(74, 101, 114, 0.1); padding: 4px 12px; border-radius: 6px; }
+        .page-size-selector { font-size: 0.9em; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
+        .page-size-selector select { padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); font-weight: 600; cursor: pointer; }
+        .pagination-container { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+        .btn-page { padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); font-size: 0.85em; font-weight: 600; cursor: pointer; transition: 0.1s; }
+        .btn-page:hover:not(:disabled) { background: var(--row-hover); }
+        .btn-page:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-page.active { background: var(--bg-header); color: white; border-color: var(--bg-header); }
+        .btn-action { padding: 9px 18px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 0.88em; transition: 0.2s; }
+        .table-container { flex-grow: 1; overflow: auto; margin: 0 24px 24px 24px; background: var(--bg-table); border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.15); border: 1px solid var(--border-color); position: relative; z-index: 10; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+        th { background-color: var(--bg-header); color: white; position: sticky; top: 0; z-index: 20; padding: 12px 14px; text-align: left; border-bottom: 2px solid #37474f; font-size: 0.85em; }
+        th.sortable { cursor: pointer; }
+        td { padding: 12px 14px; border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); font-size: 0.88em; vertical-align: middle; background: transparent; word-wrap: break-word; white-space: normal; }
+        .sticky-col { position: sticky; left: 0; z-index: 15; background-color: var(--bg-table) !important; border-right: 2px solid var(--border-color) !important; }
+        th.sticky-col { z-index: 25; background-color: var(--bg-header) !important; }
+        td.clickable-cell { cursor: pointer; }
+        td.clickable-cell:hover { background-color: rgba(74, 101, 114, 0.1) !important; }
+        tr:hover td { background-color: var(--row-hover) !important; }
+        .cell-badge { background-color: rgba(176, 190, 197, 0.2); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 6px; padding: 2px 8px; font-size: 0.82em; font-weight: 600; margin: 1px; display: inline-block; cursor: pointer; }
+        .highlight { background-color: #fff59d; color: #2c3e50; font-weight: 600; }
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); }
+        .modal-content { background: var(--modal-bg); margin: 5% auto; padding: 24px; width: 90%; max-height: 85%; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); display: flex; flex-direction: column; overflow: hidden; color: var(--text-main); }
+        .dropdown-list { display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--bg-table); border-radius: 8px; z-index: 200; max-height: 220px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border-color); }
+        .dropdown-item { padding: 9px 12px; cursor: pointer; border-bottom: 1px solid var(--border-color); font-size: 0.9em; }
+        .dropdown-item.selected { background-color: #4a6572; color: white; font-weight: 600; }
+        .show { display: block; }
+    </style>
+    <script>
+        document.write('<script src="data.js?v=' + new Date().getTime() + '"><\/script>');
+    </script>
+</head>
+<body>
+
+    <h1>
+        <div class="title-left">
+            <img src="アークナイツ.png" class="title-logo" alt="" onerror="this.style.display='none'">
+            <span>アークナイツオペレーターデータベース</span>
+        </div>
+        <div>
+            <button class="btn-action" style="background:#455a64; color:#fff; margin-right:8px;" onclick="toggleDarkMode()">🌓 テーマ切替</button>
+            <button class="btn-action" style="background:#607d8b; color:#fff; margin-right:8px;" onclick="openColumnModal()">⚙ 列表示設定</button>
+            <button class="btn-action" style="background:#4caf50; color:#fff; margin-right:8px;" onclick="exportData()">JSON出力</button>
+            <button class="btn-action" style="background:#009688; color:#fff;" onclick="openManual()">❔ ヘルプ</button>
+        </div>
+    </h1>
+
+    <div class="top-section">
+        <div class="search-container">
+            <div class="search-grid" id="searchGrid"></div>
+            <div class="search-footer">
+                <div class="page-size-selector">
+                    表示件数:
+                    <select id="pageSizeSelect" onchange="changePageSize(this.value)">
+                        <option value="10">10件</option>
+                        <option value="20">20件</option>
+                        <option value="50">50件</option>
+                        <option value="100">100件</option>
+                        <option value="all">全件</option>
+                    </select>
+                </div>
+                <div class="pagination-container" id="paginationNav"></div>
+                <div class="search-count" id="searchCount">検索結果: 0 件</div>
+                <button style="background:none; color:var(--text-sub); border:1px solid var(--text-sub); padding:6px 14px; border-radius:6px; cursor:pointer; font-weight:600;" onclick="allClear()">検索条件リセット</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table id="mainTable">
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <div id="columnModal" class="modal"><div class="modal-content" style="width:400px; margin: 5% auto;"><h3>列設定</h3><div id="columnListContainer" style="max-height:400px; overflow-y:auto; margin-bottom:20px;"></div><div style="text-align: right;"><button onclick="closeModal('columnModal')" class="btn-action">キャンセル</button><button onclick="saveColumnSettings()" class="btn-action" style="background:#2196f3; color:white; margin-left:10px;">保存</button></div></div></div>
+
+    <script>
+        const MASTER_ORDER_STAR = ['6', '5', '4', '3', '2', '1'];
+        const MASTER_ORDER_RANK = ['SS', 'S', 'A', 'B', 'C', 'D', 'なし'];
+        const MASTER_ORDER_JOBGROUP = ['先鋒', '狙撃', '前衛', '術師', '重装', '医療', '特殊', '補助'];
+
+        let operatorData = []; 
+        let currentSort = { key: null, asc: true };
+        let pageSize = "50";
+        let currentPage = 1; 
+        
+        const ALL_COLUMNS = [
+            { id: 'op', label: 'オペレーター', width: '130px', sortable: true },
+            { id: 'star', label: '★', width: '70px', sortable: true },
+            { id: 'rank', label: 'ランク', width: '70px', sortable: true },
+            { id: 'jobGroup', label: '職業', width: '90px', sortable: true },
+            { id: 'job', label: '職分', width: '110px', sortable: true }, 
+            { id: 'cost', label: 'コスト', width: '60px', sortable: true },
+            { id: 'block', label: 'ブロック', width: '60px', sortable: true },
+            { id: 'hp', label: 'HP', width: '80px', sortable: true },
+            { id: 'atk', label: '攻撃力', width: '80px', sortable: true },
+            { id: 'def', label: '防御力', width: '80px', sortable: true },
+            { id: 'res', label: '術耐性', width: '80px', sortable: true },
+            { id: 'reDeploy', label: '再配置', width: '90px', sortable: true }, 
+            { id: 'atkSpeed', label: '攻撃速度', width: '95px', sortable: true }, 
+            { id: 'obtain', label: '入手方法', width: '180px' }, 
+            { id: 'recruitTags', label: '募集タグ', width: '220px' }, 
+            { id: 'sName', label: 'スキル名', width: '140px' },
+            { id: 'sSpType', label: 'SP型', width: '90px' },
+            { id: 'sTrigger', label: '発動', width: '90px' },
+            { id: 'sInit', label: '初期', width: '50px' },
+            { id: 'sReq', label: '必要', width: '50px' },
+            { id: 'sDur', label: '持続', width: '50px' },
+            { id: 'sEffect', label: '効果詳細', width: '600px' },
+            { id: 'sTag', label: 'タグ', width: '110px' } 
+        ];
+
+        let colSettings = ALL_COLUMNS.map(c => ({ id: c.id, visible: true }));
+        const filterKeys = ['star', 'rank', 'jobGroup', 'job', 'cost', 'block', 'reDeploy', 'atkSpeed', 'obtain', 'recruitTags', 'sSpType', 'sTrigger', 'sTag'];
+        const selections = {}; filterKeys.forEach(k => selections[k] = []);
+
+        function init() {
+            operatorData = (typeof DEFAULT_MASTER_DATA !== 'undefined') ? DEFAULT_MASTER_DATA : [];
+            
+            if(localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+            const savedCols = localStorage.getItem('column_settings_v40');
+            if(savedCols) colSettings = JSON.parse(savedCols);
+            const savedPageSize = localStorage.getItem('pageSizeSetting_v74');
+            if(savedPageSize) pageSize = savedPageSize;
+
+            document.getElementById('pageSizeSelect').value = pageSize;
+            renderSearchGrid();
+            handleSearch();
+            window.onclick = (e) => { if (!e.target.closest('.search-item')) document.querySelectorAll('.dropdown-list').forEach(l => l.classList.remove('show')); };
+        }
+
+        function changePageSize(value) {
+            pageSize = value;
+            localStorage.setItem('pageSizeSetting_v74', value);
+            currentPage = 1; 
+            handleSearch();
+        }
+
+        function setPage(pageNumber) {
+            currentPage = pageNumber;
+            handleSearch();
+        }
+
+        function renderPaginationControls(totalItems) {
+            const nav = document.getElementById('paginationNav');
+            if (pageSize === "all" || totalItems <= parseInt(pageSize)) {
+                nav.innerHTML = ""; 
+                return;
+            }
+
+            const size = parseInt(pageSize);
+            const totalPages = Math.ceil(totalItems / size);
+            
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            let html = "";
+            html += `<button class="btn-page" ${currentPage === 1 ? 'disabled' : ''} onclick="setPage(${currentPage - 1})">◀</button>`;
+            
+            for (let i = 1; i <= totalPages; i++) {
+                if (totalPages > 6) {
+                    if (i !== 1 && i !== totalPages && Math.abs(i - currentPage) > 1) {
+                        if (i === 2 && currentPage > 3) html += `<span style="color:var(--text-sub);padding:0 2px;">...</span>`;
+                        if (i === totalPages - 1 && currentPage < totalPages - 2) html += `<span style="color:var(--text-sub);padding:0 2px;">...</span>`;
+                        continue;
+                    }
+                }
+                html += `<button class="btn-page ${i === currentPage ? 'active' : ''}" onclick="setPage(${i})">${i}</button>`;
+            }
+
+            html += `<button class="btn-page" ${currentPage === totalPages ? 'disabled' : ''} onclick="setPage(${currentPage + 1})">▶</button>`;
+            
+            nav.innerHTML = html;
+        }
+
+        function handleSearch() {
+            const kw = document.getElementById('keywordInput')?.value.toLowerCase() || "";
+            let filtered = [];
+            
+            operatorData.forEach((char, originalIdx) => {
+                let isFilterMatch = true;
+                for(let k of filterKeys) {
+                    if(selections[k] && selections[k].length && !['sTag', 'sSpType', 'sTrigger'].includes(k)) {
+                        const val = char[k];
+                        if(['obtain', 'recruitTags'].includes(k)) {
+                            const vals = Array.isArray(val) ? val : String(val??'').split(',').map(s=>s.trim());
+                            if(!selections[k].some(s => vals.includes(s))) { isFilterMatch = false; break; }
+                        } else {
+                            if(!selections[k].includes(String(val ?? '-'))) { isFilterMatch = false; break; }
+                        }
+                    }
+                }
+                if (!isFilterMatch) return;
+
+                const nameMatched = kw && (char.name || "").toLowerCase().includes(kw);
+                const filteredSkills = (char.skills || []).filter(s => {
+                    if(!s) return false;
+                    if(selections.sSpType.length && !selections.sSpType.includes(String(s.spType ?? '-'))) return false;
+                    if(selections.sTrigger.length && !selections.sTrigger.includes(String(s.trigger ?? '-'))) return false;
+                    if(selections.sTag.length && !selections.sTag.includes(String(s.tag ?? '-'))) return false;
+                    if(kw) {
+                        if(nameMatched) return true;
+                        return (s.name || "").toLowerCase().includes(kw) || (s.effect || "").toLowerCase().includes(kw);
+                    }
+                    return true;
+                });
+
+                const hasSkillFilter = selections.sSpType.length || selections.sTrigger.length || selections.sTag.length;
+                if ((kw || hasSkillFilter) && !nameMatched && filteredSkills.length === 0) return;
+                const displaySkills = (kw || hasSkillFilter) ? (filteredSkills.length > 0 ? filteredSkills : (char.skills || [null])) : (char.skills || [null]);
+
+                filtered.push({ ...char, _originalIdx: originalIdx, _displaySkills: displaySkills });
+            });
+
+            document.getElementById('searchCount').innerText = `検索結果: ${filtered.length} 件`;
+
+            if (currentSort.key) {
+                filtered.sort((a, b) => {
+                    let vA = (currentSort.key === 'op') ? a.name : (a[currentSort.key] ?? '');
+                    let vB = (currentSort.key === 'op') ? b.name : (b[currentSort.key] ?? '');
+                    const numA = parseFloat(vA), numB = parseFloat(vB);
+                    if (!isNaN(numA) && !isNaN(numB)) return currentSort.asc ? numA - numB : numB - numA;
+                    return currentSort.asc ? String(vA).localeCompare(String(vB), 'ja') : String(vB).localeCompare(String(vA), 'ja');
+                });
+            }
+
+            renderPaginationControls(filtered.length);
+
+            let displayData = filtered;
+            if (pageSize !== "all") {
+                const size = parseInt(pageSize);
+                const start = (currentPage - 1) * size;
+                displayData = filtered.slice(start, start + size);
+            }
+
+            renderTable(displayData);
+        }
+
+        function renderTable(data) {
+            const kw = document.getElementById('keywordInput')?.value.toLowerCase() || "";
+            const cols = colSettings.filter(s => s.visible).map(s => ALL_COLUMNS.find(c => c.id === s.id));
+            
+            document.getElementById("tableHead").innerHTML = `<tr>${cols.map(c => {
+                const icon = c.sortable ? (currentSort.key === c.id ? (currentSort.asc ? ' ▲' : ' ▼') : ' <span style="opacity:0.3">⇅</span>') : '';
+                const stickyCls = (c.id === 'op') ? 'sticky-col' : '';
+                return `<th style="width:${c.width}" ${c.sortable ? `onclick="requestSort('${c.id}')" class="sortable ${stickyCls}"` : `class="${stickyCls}"`}>${c.label}${icon}</th>`;
+            }).join('')}</tr>`;
+
+            let html = "";
+            data.forEach(char => {
+                const visibleSkills = char._displaySkills || (char.skills || [null]);
+                const skillMap = { sName:'name', sSpType:'spType', sTrigger:'trigger', sInit:'initSp', sReq:'reqSp', sDur:'duration', sEffect:'effect', sTag:'tag' };
+
+                visibleSkills.forEach((s, i) => {
+                    let row = '<tr>';
+                    cols.forEach(col => {
+                        const isMain = !['sName','sSpType','sTrigger','sInit','sReq','sDur','sEffect','sTag'].includes(col.id);
+                        if (isMain && i > 0) return;
+                        
+                        let rawVal = isMain ? (col.id === 'op' ? char.name : (char[col.id] ?? '-')) : (s ? (s[skillMap[col.id]] ?? '-') : '-');
+                        let display = "";
+                        let isSearchable = filterKeys.includes(col.id);
+                        let clickableCls = (isSearchable) ? 'clickable-cell' : '';
+                        let clickAttr = "";
+
+                        if (col.id === 'op') { display = `<strong>${hl(rawVal,kw)}</strong>`; }
+                        else if (['obtain','recruitTags','sTag'].includes(col.id)) { display = createBadges(rawVal, col.id); clickableCls = ""; }
+                        else { display = hl(rawVal,kw); }
+                        
+                        if (clickableCls) { clickAttr = `onclick="handleCellClick('${col.id}', '${String(rawVal).replace(/'/g, "\\'")}')"`; }
+                        const stickyCls = (col.id === 'op') ? 'sticky-col' : '';
+                        row += `<td ${isMain ? `rowspan="${visibleSkills.length}"` : ''} class="${clickableCls} ${stickyCls}" ${clickAttr}>${display}</td>`;
+                    });
+                    html += row + '</tr>';
+                });
+            });
+            document.getElementById("tableBody").innerHTML = html;
+        }
+
+        function handleCellClick(key, val) {
+            if(val === '-' || !val) return;
+            const v = val.trim();
+            const idx = selections[key].indexOf(v);
+            if(idx === -1) selections[key].push(v);
+            else selections[key].splice(idx, 1);
+            if (key === 'jobGroup') selections.job = []; 
+            currentPage = 1; 
+            updateFilters(); 
+            handleSearch();
+        }
+
+        function renderSearchGrid() {
+            const grid = document.getElementById('searchGrid'), labels = { star:'★', rank:'ランク', jobGroup:'職業', job:'職分', cost:'コスト', block:'ブロック', reDeploy:'再配置', atkSpeed:'攻撃速度', obtain:'入手方法', recruitTags:'募集タグ', sSpType:'SP型', sTrigger:'発動', sTag:'Sタグ' };
+            grid.innerHTML = `<div class="search-item"><label>キーワード</label><div class="input-wrapper"><input type="text" id="keywordInput" oninput="currentPage=1; handleSearch()" placeholder="名前/スキル/効果..."><span class="main-clear-btn" onclick="document.getElementById('keywordInput').value='';currentPage=1;handleSearch()">×</span></div></div>`;
+            filterKeys.forEach(k => { grid.innerHTML += `<div class="search-item"><label>${labels[k]}</label><div class="chip-container" onclick="toggleDrop(event,'${k}')"><div id="chips-${k}"></div><span class="placeholder" id="ph-${k}">選択なし</span><span class="main-clear-btn" onclick="clearSel(event,'${k}')">×</span></div><div class="dropdown-list" id="list-${k}"></div></div>`; });
+            updateFilters();
+        }
+        
+        function updateFilters() {
+            const getUT = (p) => { let t=[]; operatorData.forEach(d=>{ const v=d[p]; if(v) { if(Array.isArray(v)) t.push(...v); else t.push(...String(v).split(',').map(s=>s.trim())); } }); return [...new Set(t)].filter(v => v && v !== '-').sort(); };
+            
+            filterKeys.forEach(k => {
+                let opts = [];
+                if (k === 'star') { opts = [...MASTER_ORDER_STAR]; } 
+                else if (k === 'rank') { opts = [...MASTER_ORDER_RANK]; } 
+                else if (k === 'jobGroup') { opts = [...MASTER_ORDER_JOBGROUP]; } 
+                else if (k === 'job') { 
+                    opts = (selections.jobGroup.length > 0) ? [...new Set(operatorData.filter(d => selections.jobGroup.includes(d.jobGroup)).map(d => d.job))] : [...new Set(operatorData.map(d => d.job))]; 
+                    opts = opts.filter(v => v && v !== '-').sort();
+                } else if (k === 'cost') {
+                    opts = [...new Set(operatorData.map(d => String(d[k] || '-')))].filter(v => v && v !== '-');
+                    opts.sort((a, b) => { const nA = parseFloat(a), nB = parseFloat(b); if (!isNaN(nA) && !isNaN(nB)) return nA - nB; return a.localeCompare(b, 'ja'); });
+                } else if (k === 'sTag') { 
+                    opts = [...new Set(operatorData.flatMap(d => (d.skills||[]).map(s => s.tag)))].filter(v => v && v !== '-').sort(); 
+                } else if (['obtain', 'recruitTags'].includes(k)) { 
+                    opts = getUT(k); 
+                } else { 
+                    opts = [...new Set(operatorData.map(d => String(d[k] || '-')))].filter(v => v && v !== '-').sort(); 
+                }
+
+                const list = document.getElementById(`list-${k}`); if(list) list.innerHTML = opts.map(o => `<div class="dropdown-item ${selections[k].includes(o)?'selected':''}" onclick="sel(event,'${k}','${o}')">${o}</div>`).join('');
+                const chips = document.getElementById(`chips-${k}`); if(chips) chips.innerHTML = selections[k].map(v => `<div class="chip"><span class="remove-chip" onclick="sel(event,'${k}','${v}')">×</span>${v}</div>`).join('');
+                document.getElementById(`ph-${k}`).style.display = selections[k].length ? 'none' : 'block';
+            });
+        }
+
+        function sel(e,k,v){ e.stopPropagation(); const i=selections[k].indexOf(v); if(i===-1) selections[k].push(v); else selections[k].splice(i,1); if (k === 'jobGroup') selections.job = []; currentPage = 1; updateFilters(); handleSearch(); }
+        function clearSel(e,k){ e.stopPropagation(); selections[k]=[]; if(k==='jobGroup') selections.job=[]; currentPage = 1; updateFilters(); handleSearch(); }
+        function toggleDrop(e,k){ e.stopPropagation(); const el=document.getElementById(`list-${k}`), s=el.classList.contains('show'); document.querySelectorAll('.dropdown-list').forEach(l=>l.classList.remove('show')); if(!s) el.classList.add('show'); }
+        function allClear(){ document.getElementById('keywordInput').value=""; filterKeys.forEach(k=>selections[k]=[]); currentPage = 1; updateFilters(); handleSearch(); }
+        function hl(t,w){ if(!w) return t; const escaped = w.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'); return String(t).replace(new RegExp(`(${escaped})`,'gi'), '<span class="highlight">$1</span>'); }
+        function createBadges(f, key){ const items = Array.isArray(f)?f:String(f||'').split(',').map(s=>s.trim()).filter(v => v && v !== '-'); if(!items.length) return ""; return `<div style="display:flex;flex-wrap:wrap;gap:4px;">${items.map(i=>`<span class="cell-badge" onclick="event.stopPropagation(); handleCellClick('${key}', '${i.replace(/'/g, "\\'")}')">${i}</span>`).join('')}</div>`; }
+        
+        function exportData() { 
+            const b = new Blob([JSON.stringify(operatorData, null, 2)], {type: 'application/json'}); 
+            const a = Object.assign(document.createElement('a'), {href: URL.createObjectURL(b), download: 'arknights_data.json'}); 
+            a.click(); 
+        }
+
+        function toggleDarkMode() { const isDark = document.documentElement.getAttribute('data-theme') === 'dark'; document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark'); localStorage.setItem('theme', isDark ? 'light' : 'dark'); }
+        function openColumnModal() { const container = document.getElementById('columnListContainer'); container.innerHTML = colSettings.map(s => `<div class="column-item" draggable="true" ondragstart="drag(event)" ondragover="allowDrop(event)" ondrop="drop(event)" data-id="${s.id}">☰ <input type="checkbox" id="chk-${s.id}" ${s.visible ? 'checked' : ''}> <label for="chk-${s.id}">${ALL_COLUMNS.find(c => c.id === s.id).label}</label></div>`).join(''); document.getElementById('columnModal').style.display = 'block'; }
+        function saveColumnSettings() { colSettings = Array.from(document.querySelectorAll('.column-item')).map(item => ({ id: item.dataset.id, visible: item.querySelector('input').checked })); localStorage.setItem('column_settings_v40', JSON.stringify(colSettings)); handleSearch(); closeModal('columnModal'); }
+        let draggedItem = null; function drag(e) { draggedItem = e.currentTarget; } function allowDrop(e) { e.preventDefault(); } function drop(e) { e.preventDefault(); const list = document.getElementById('columnListContainer'); const items = [...list.querySelectorAll('.column-item')]; const curIdx = items.indexOf(e.currentTarget), dragIdx = items.indexOf(draggedItem); if (curIdx > dragIdx) list.insertBefore(draggedItem, e.currentTarget.nextSibling); else list.insertBefore(draggedItem, e.currentTarget); }
+        function requestSort(id) { if (currentSort.key === id) currentSort.asc = !currentSort.asc; else { currentSort.key = id; currentSort.asc = true; } handleSearch(); }
+        function openManual() { window.open('アークナイツオペレーターデータベースマニュアル.html', '_blank'); }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        
+        window.onload = init;
+    </script>
+</body>
+</html>
