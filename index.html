@@ -31,17 +31,15 @@
         .tab.active { background: var(--bg-table); color: var(--accent); padding-bottom: 10px; margin-bottom: -1px; z-index: 2; box-shadow: 0 -4px 12px rgba(0,0,0,0.05); }
         .tab:hover:not(.active) { background: rgba(74, 101, 114, 0.3); }
         .tab-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-grow: 1; }
-        .tab-close { opacity: 0.5; font-size: 1.2em; line-height: 1; }
+        .tab-close { opacity: 0.5; font-size: 1.2em; line-height: 1; margin-left: 4px; }
         .tab-close:hover { opacity: 1; color: #f44336; }
         .btn-add-tab { padding: 4px 12px; background: none; border: 1px dashed var(--text-sub); border-bottom: none; border-radius: 8px 8px 0 0; cursor: pointer; color: var(--text-sub); font-weight: bold; margin-bottom: 2px; }
         .btn-add-tab:hover { background: rgba(255,255,255,0.2); }
         
-        /* 画面分割コントロールのスタイル変更 */
         .layout-controls { margin-left: auto; display: flex; gap: 2px; background: rgba(0,0,0,0.05); padding: 2px; border-radius: 6px; margin-bottom: 2px; }
         .layout-btn { background: transparent; color: var(--text-sub); border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: 0.2s; }
         .layout-btn.active { background: var(--accent); color: white; }
 
-        /* ワークスペースのコンテナ（デフォルトは左右並び、縦分割時は縦並び） */
         .workspace-container { flex-grow: 1; display: flex; overflow: hidden; margin: 0 24px 24px 24px; gap: 12px; }
         .workspace-container.view-vertical { flex-direction: column; }
         
@@ -68,9 +66,8 @@
         .dropdown-item.selected { background-color: #4a6572; color: white; font-weight: 600; }
         .show { display: block; }
         
-        .range-monospace { font-family: monospace; font-size: 13px; letter-spacing: 0px; line-height: 1.1; white-space: pre-wrap; pointer-events: none; display: inline-block; text-align: left; }
+        .range-monospace { font-family: monospace; font-size: 13px; letter-spacing: 0px; line-height: 1.1; white-space: pre-wrap; display: inline-block; text-align: left; }
         .range-invisible-space { opacity: 0 !important; visibility: hidden; }
-        .table-container .range-monospace { pointer-events: auto; }
         .cv-input-style { width: 100%; border: none; background: transparent; font-size: 0.85em; color: var(--text-main); outline: none; padding: 4px 0; min-width: 60px; flex-grow: 1; }
         
         .search-footer-mini { display: flex; align-items: center; gap: 8px; font-size: 0.85em; }
@@ -80,6 +77,7 @@
         .btn-page-mini { padding: 2px 6px; font-size: 0.8em; cursor: pointer; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); border-radius: 4px; }
         .btn-page-mini:disabled { opacity: 0.4; cursor: not-allowed; }
         .btn-page-mini.active { background: var(--bg-header); color: white; }
+        .btn-action { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: 600; }
     </style>
     <script>
         document.write('<script src="data.js?v=' + new Date().getTime() + '"><\/script>');
@@ -113,14 +111,14 @@
         <button class="btn-add-tab" onclick="addTab()">＋</button>
         
         <div class="layout-controls">
-            <button class="layout-btn active" id="layout-single" onclick="changeLayout('single')">▢ 通常</button>
+            <button class="layout-btn" id="layout-single" onclick="changeLayout('single')">▢ 通常</button>
             <button class="layout-btn" id="layout-horizontal" onclick="changeLayout('horizontal')">◧ 左右分割</button>
             <button class="layout-btn" id="layout-vertical" onclick="changeLayout('vertical')">◪ 上下分割</button>
         </div>
     </div>
 
     <div class="workspace-container" id="workspace">
-        <div class="table-view-wrapper active-side" id="leftView" onclick="setActiveSide('left')">
+        <div class="table-view-wrapper" id="leftView" onclick="setActiveSide('left')">
             <div class="table-header-info">
                 <div id="leftTabLabel" style="font-weight:700; font-size:0.85em; color:var(--accent);"></div>
                 <div class="search-footer-mini" id="leftFooter"></div>
@@ -187,13 +185,22 @@
         let operatorData = [];
         let tabs = []; 
         let activeTabId = null;
-        let currentLayoutMode = 'single'; // 'single', 'horizontal', 'vertical'
+        let currentLayoutMode = 'single'; 
         let leftTabId = null;
         let rightTabId = null;
         let activeSide = 'left'; 
         let colSettings = ALL_COLUMNS.map(c => ({ id: c.id, visible: true }));
         let cvSearchQuery = "";
         let tabCounter = 0;
+
+        function saveState() {
+            localStorage.setItem('tabs_data_v40', JSON.stringify(tabs));
+            localStorage.setItem('layout_mode_v40', currentLayoutMode);
+            localStorage.setItem('left_tab_id_v40', leftTabId);
+            localStorage.setItem('right_tab_id_v40', rightTabId);
+            localStorage.setItem('active_tab_id_v40', activeTabId);
+            localStorage.setItem('active_side_v40', activeSide);
+        }
 
         function init() {
             operatorData = (typeof DEFAULT_MASTER_DATA !== 'undefined') ? DEFAULT_MASTER_DATA : [];
@@ -203,29 +210,53 @@
             if(savedCols) colSettings = JSON.parse(savedCols);
             ALL_COLUMNS.forEach(col => { if(!colSettings.some(s => s.id === col.id)) colSettings.push({ id: col.id, visible: true }); });
 
-            // 1. 初期のタブ作成
-            tabCounter++;
-            const sels = {}; filterKeys.forEach(k => sels[k] = []);
-            const firstTab = {
-                id: 'tab-' + Date.now() + '-' + tabCounter,
-                name: "検索 1",
-                selections: sels,
-                keyword: "",
-                cvQuery: "",
-                currentSort: { key: null, asc: true },
-                currentPage: 1,
-                pageSize: 50
-            };
-            tabs.push(firstTab);
-            leftTabId = firstTab.id;
-            activeTabId = firstTab.id;
-            activeSide = 'left';
+            const savedTabs = localStorage.getItem('tabs_data_v40');
+            const savedLayout = localStorage.getItem('layout_mode_v40');
+            
+            if (savedTabs) {
+                tabs = JSON.parse(savedTabs);
+                currentLayoutMode = savedLayout || 'single';
+                leftTabId = localStorage.getItem('left_tab_id_v40');
+                rightTabId = localStorage.getItem('right_tab_id_v40');
+                activeTabId = localStorage.getItem('active_tab_id_v40');
+                activeSide = localStorage.getItem('active_side_v40') || 'left';
+                
+                tabs.forEach(t => {
+                    const match = t.id.match(/-(\d+)$/);
+                    if (match) { tabCounter = Math.max(tabCounter, parseInt(match[1])); }
+                });
+            }
 
-            // 2. 検索パネル作成
+            if (tabs.length === 0 || !tabs.some(t => t.id === activeTabId)) {
+                tabs = [];
+                tabCounter = 1;
+                const sels = {}; filterKeys.forEach(k => sels[k] = []);
+                const firstTab = {
+                    id: 'tab-' + Date.now() + '-1',
+                    name: "検索 1",
+                    selections: sels,
+                    keyword: "",
+                    cvQuery: "",
+                    currentSort: { key: null, asc: true },
+                    currentPage: 1,
+                    pageSize: 50
+                };
+                tabs.push(firstTab);
+                leftTabId = firstTab.id;
+                activeTabId = firstTab.id;
+                activeSide = 'left';
+                currentLayoutMode = 'single';
+            }
+
             renderSearchGrid();
+            
+            const currentTab = tabs.find(t => t.id === activeTabId);
+            if (currentTab) {
+                document.getElementById('keywordInput').value = currentTab.keyword;
+                cvSearchQuery = currentTab.cvQuery;
+            }
 
-            // 3. 全体リフレッシュ（初期描画）
-            refreshAll();
+            changeLayout(currentLayoutMode, false); 
 
             window.onclick = (e) => { if (!e.target.closest('.search-item')) document.querySelectorAll('.dropdown-list').forEach(l => l.classList.remove('show')); };
         }
@@ -263,31 +294,32 @@
             activeSide = side;
             
             const tab = tabs.find(t => t.id === id);
+            if (!tab) return;
             cvSearchQuery = tab.cvQuery;
             document.getElementById('keywordInput').value = tab.keyword;
             const cvIn = document.getElementById('cvInput');
             if(cvIn) cvIn.value = tab.cvQuery;
 
+            saveState();
             refreshAll();
         }
 
-        function deleteTab(e, id) {
+        function deleteTab(e, targetId) {
             e.stopPropagation();
             if (tabs.length <= 1) return;
-            tabs = tabs.filter(t => t.id !== id);
+            tabs = tabs.filter(t => t.id !== targetId);
             
-            if (leftTabId === id) leftTabId = tabs[0].id;
-            if (rightTabId === id) rightTabId = tabs[0].id;
-            if (activeTabId === id) activeTabId = tabs[0].id;
+            if (leftTabId === targetId) leftTabId = tabs[0].id;
+            if (rightTabId === targetId) rightTabId = tabs[0].id;
+            if (activeTabId === targetId) activeTabId = tabs[0].id;
             
+            saveState();
             refreshAll();
         }
 
-        // レイアウトを切り替える新関数
-        function changeLayout(mode) {
+        function changeLayout(mode, shouldSave = true) {
             currentLayoutMode = mode;
             
-            // ボタンの選択状態クラスをリセット
             document.getElementById('layout-single').classList.toggle('active', mode === 'single');
             document.getElementById('layout-horizontal').classList.toggle('active', mode === 'horizontal');
             document.getElementById('layout-vertical').classList.toggle('active', mode === 'vertical');
@@ -309,10 +341,11 @@
                 rightView.style.display = 'flex';
                 ensureSecondTab();
             }
+            
+            if (shouldSave) saveState();
             refreshAll();
         }
 
-        // 分割時に2つ目のタブが存在することを確認する補助関数
         function ensureSecondTab() {
             if (tabs.length > 1) {
                 if (!rightTabId || rightTabId === leftTabId) {
@@ -323,6 +356,8 @@
                 tabs.push(newTab);
                 rightTabId = newTab.id;
             }
+            if (activeSide === 'right') activeTabId = rightTabId;
+            else activeTabId = leftTabId;
         }
 
         function setActiveSide(side) {
@@ -339,6 +374,7 @@
             const cvIn = document.getElementById('cvInput');
             if(cvIn) cvIn.value = tab.cvQuery;
             
+            saveState();
             updateFilters();
         }
 
@@ -347,6 +383,7 @@
             if(!tab) return;
             tab.pageSize = value;
             tab.currentPage = 1;
+            saveState();
             handleSearch(tabId, side);
         }
 
@@ -354,46 +391,14 @@
             const tab = tabs.find(t => t.id === tabId);
             if(!tab) return;
             tab.currentPage = pageNum;
+            saveState();
             handleSearch(tabId, side);
         }
 
-        function refreshAll() {
-            renderTabs();
-            if (leftTabId) handleSearch(leftTabId, 'left');
-            if (currentLayoutMode !== 'single' && rightTabId) handleSearch(rightTabId, 'right');
-            updateFilters();
-        }
-
-        function renderTabs() {
-            const bar = document.getElementById('tabBar');
-            const addBtn = bar.querySelector('.btn-add-tab');
-            const oldTabs = bar.querySelectorAll('.tab');
-            oldTabs.forEach(t => t.remove());
-
-            tabs.forEach(t => {
-                const tabEl = document.createElement('div');
-                const isActive = (t.id === activeTabId);
-                
-                tabEl.className = `tab ${isActive ? 'active' : ''}`;
-                tabEl.onclick = () => switchTab(t.id, currentLayoutMode !== 'single' ? activeSide : 'left');
-                
-                const nameSpan = document.createElement('span');
-                nameSpan.className = 'tab-name';
-                nameSpan.textContent = t.name;
-                nameSpan.ondblclick = (e) => {
-                    const newName = prompt("タブ名を変更:", t.name);
-                    if (newName) { t.name = newName; renderTabs(); }
-                };
-
-                const closeBtn = document.createElement('span');
-                closeBtn.className = 'tab-close';
-                closeBtn.innerHTML = '×';
-                closeBtn.onclick = (e) => deleteTab(e, t.id);
-
-                tabEl.appendChild(nameSpan);
-                if (tabs.length > 1) tabEl.appendChild(closeBtn);
-                bar.insertBefore(tabEl, addBtn);
-            });
+        // 検索時の改行や空白の差異をなくすための標準化関数
+        function normalizeVal(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/\\n/g, '\n').trim();
         }
 
         function handleSearch(tabId, side) {
@@ -412,12 +417,12 @@
                         continue;
                     }
                     if(tab.selections[k] && tab.selections[k].length && !['sTag', 'sSpType', 'sTrigger'].includes(k)) {
-                        const val = char[k];
                         if(['obtain', 'recruitTags'].includes(k)) {
-                            const vals = Array.isArray(val) ? val : String(val??'').split(',').map(s=>s.trim());
-                            if(!tab.selections[k].some(s => vals.includes(s))) { isFilterMatch = false; break; }
+                            const rawVals = (Array.isArray(char[k]) ? char[k] : String(char[k] ?? '').split(',')).map(s => normalizeVal(s));
+                            if(!tab.selections[k].some(s => rawVals.includes(normalizeVal(s)))) { isFilterMatch = false; break; }
                         } else {
-                            if(!tab.selections[k].includes(String(val ?? '-'))) { isFilterMatch = false; break; }
+                            // 比較時に双方を normalizeVal することによって、\n の表現違いを完全に吸収
+                            if(!tab.selections[k].some(s => normalizeVal(s) === normalizeVal(char[k]))) { isFilterMatch = false; break; }
                         }
                     }
                 }
@@ -429,11 +434,11 @@
 
                 const filteredSkills = (char.skills || []).filter(s => {
                     if(!s) return false;
-                    if(tab.selections.sSpType.length && !tab.selections.sSpType.includes(String(s.spType ?? '-'))) return false;
-                    if(tab.selections.sTrigger.length && !tab.selections.sTrigger.includes(String(s.trigger ?? '-'))) return false;
+                    if(tab.selections.sSpType.length && !tab.selections.sSpType.some(sel => normalizeVal(sel) === normalizeVal(s.spType))) return false;
+                    if(tab.selections.sTrigger.length && !tab.selections.sTrigger.some(sel => normalizeVal(sel) === normalizeVal(s.trigger))) return false;
                     if(tab.selections.sTag.length) {
-                        const sTags = Array.isArray(s.tag) ? s.tag : String(s.tag ?? '-').split(',').map(t => t.trim());
-                        if(!tab.selections.sTag.some(t => sTags.includes(t))) return false;
+                        const sTags = (Array.isArray(s.tag) ? s.tag : String(s.tag ?? '').split(',').map(t => t.trim())).map(t => normalizeVal(t));
+                        if(!tab.selections.sTag.some(t => sTags.includes(normalizeVal(t)))) return false;
                     }
                     if(kw) {
                         if(nameMatched || cvMatched || rangeMatched) return true;
@@ -528,7 +533,11 @@
                         else if (col.id === 'range') display = `<div class="range-monospace">${formatRangeText(hl(rawVal,kw))}</div>`;
                         else display = hl(rawVal,kw);
                         
-                        if (clickableCls) clickAttr = `onclick="handleCellClick('${col.id}', '${String(rawVal).replace(/\n/g, "\\n").replace(/'/g, "\\'")}')"`;
+                        if (clickableCls) {
+                            // 元データ由来の値をそのまま渡すため、エスケープ等の過剰処理を避けてシンプルにエンコード
+                            const encVal = encodeURIComponent(String(isMain ? (char[col.id] ?? '-') : (s ? (s[skillMap[col.id]] ?? '-') : '-')));
+                            clickAttr = `onclick="handleCellClick('${col.id}', '${encVal}', true)"`;
+                        }
                         const stickyCls = (col.id === 'op') ? 'sticky-col' : '';
                         row += `<td ${isMain ? `rowspan="${visibleSkills.length}"` : ''} class="${clickableCls} ${stickyCls}" ${clickAttr}>${display}</td>`;
                     });
@@ -538,8 +547,8 @@
             document.getElementById(`${side}Body`).innerHTML = html;
         }
 
-        function handleCellClick(key, val) {
-            const v = val.replace(/\\n/g, '\n').trim();
+        function handleCellClick(key, val, isEncoded = false) {
+            let v = isEncoded ? decodeURIComponent(val) : val;
             addOrToggleSelection(key, v);
         }
 
@@ -563,6 +572,7 @@
             tab.keyword = val;
             tab.currentPage = 1;
             document.getElementById('keywordInput').value = val;
+            saveState();
             refreshAll();
         }
 
@@ -574,8 +584,58 @@
             tab.currentPage = 1;
             cvSearchQuery = val;
             document.getElementById('list-cv').classList.add('show');
+            saveState();
             updateFilters(true);
             refreshAll();
+        }
+
+        function refreshAll() {
+            renderTabs();
+            if (leftTabId) handleSearch(leftTabId, 'left');
+            if (currentLayoutMode !== 'single' && rightTabId) handleSearch(rightTabId, 'right');
+            updateFilters();
+            
+            document.getElementById('leftView').classList.toggle('active-side', activeSide === 'left');
+            const rView = document.getElementById('rightView');
+            if (rView && rView.style.display !== 'none') {
+                document.getElementById('rightView').classList.toggle('active-side', activeSide === 'right');
+            }
+        }
+
+        function renderTabs() {
+            const bar = document.getElementById('tabBar');
+            const addBtn = bar.querySelector('.btn-add-tab');
+            const oldTabs = bar.querySelectorAll('.tab');
+            oldTabs.forEach(t => t.remove());
+
+            tabs.forEach(t => {
+                const tabEl = document.createElement('div');
+                const isActive = (t.id === activeTabId);
+                
+                tabEl.className = `tab ${isActive ? 'active' : ''}`;
+                tabEl.onclick = () => switchTab(t.id, currentLayoutMode !== 'single' ? activeSide : 'left');
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'tab-name';
+                nameSpan.textContent = t.name;
+                nameSpan.ondblclick = (e) => {
+                    const newName = prompt("タブ名を変更:", t.name);
+                    if (newName) { 
+                        t.name = newName; 
+                        saveState();
+                        renderTabs(); 
+                    }
+                };
+
+                const closeBtn = document.createElement('span');
+                closeBtn.className = 'tab-close';
+                closeBtn.innerHTML = '×';
+                closeBtn.onclick = (e) => deleteTab(e, t.id);
+
+                tabEl.appendChild(nameSpan);
+                if (tabs.length > 1) tabEl.appendChild(closeBtn);
+                bar.insertBefore(tabEl, addBtn);
+            });
         }
 
         function updateFilters(onlyCV = false) {
@@ -618,9 +678,14 @@
                         const isSelected = tab.selections[k].includes(o) ? 'selected' : '';
                         const itemDiv = document.createElement('div');
                         itemDiv.className = `dropdown-item ${isSelected}`;
-                        itemDiv.onclick = (e) => { e.stopPropagation(); addOrToggleSelection(k, o); };
-                        if (k === 'range') itemDiv.innerHTML = `<div class="range-monospace" style="font-size:12px; background:rgba(0,0,0,0.03); padding:4px; border-radius:4px;">${formatRangeText(o)}</div>`;
-                        else itemDiv.textContent = o;
+                        const encOpt = encodeURIComponent(o);
+                        itemDiv.onclick = (e) => { e.stopPropagation(); handleCellClick(k, encOpt, true); };
+                        
+                        if (k === 'range') {
+                            itemDiv.innerHTML = `<div class="range-monospace" style="font-size:12px; background:rgba(0,0,0,0.03); padding:4px; border-radius:4px;">${formatRangeText(o)}</div>`;
+                        } else {
+                            itemDiv.innerHTML = String(o).replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+                        }
                         list.appendChild(itemDiv);
                     });
                 }
@@ -633,12 +698,13 @@
                         chipDiv.className = `chip ${k === 'range' ? 'chip-range' : ''}`;
                         const removeSpan = document.createElement('span');
                         removeSpan.className = 'remove-chip'; removeSpan.textContent = '×';
-                        removeSpan.onclick = (e) => { e.stopPropagation(); addOrToggleSelection(k, v); };
+                        const encVal = encodeURIComponent(v);
+                        removeSpan.onclick = (e) => { e.stopPropagation(); handleCellClick(k, encVal, true); };
                         chipDiv.appendChild(removeSpan);
                         if (k === 'range') {
                             const rc = document.createElement('div'); rc.className = 'range-monospace'; rc.style.fontSize = '10px';
                             rc.innerHTML = formatRangeText(v); chipDiv.appendChild(rc);
-                        } else chipDiv.appendChild(document.createTextNode(v.replace(/\\n/g, ' ')));
+                        } else chipDiv.appendChild(document.createTextNode(String(v).replace(/\\n/g, ' ').replace(/\n/g, ' ')));
                         chips.appendChild(chipDiv);
                     });
                 }
@@ -666,6 +732,7 @@
                 if(cvIn) cvIn.value = "";
             }
             tab.currentPage = 1;
+            saveState();
             refreshAll(); 
         }
 
@@ -681,6 +748,7 @@
                 if(cvIn) cvIn.value = "";
             }
             tab.currentPage = 1;
+            saveState();
             refreshAll(); 
         }
 
@@ -704,16 +772,26 @@
             if(cvIn) cvIn.value = "";
             document.getElementById('keywordInput').value = "";
             filterKeys.forEach(k => tab.selections[k] = []); 
+            saveState();
             refreshAll(); 
         }
 
         function hl(t, w){ if(!w) return t; const escaped = w.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'); return String(t).replace(new RegExp(`(${escaped})`,'gi'), '<span class="highlight">$1</span>'); }
-        function createBadges(f, key){ const items = Array.isArray(f)?f:String(f||'').split(',').map(s=>s.trim()).filter(v => v && v !== '-'); if(!items.length) return ""; return `<div style="display:flex;flex-wrap:wrap;gap:4px;">${items.map(i=>`<span class="cell-badge" onclick="event.stopPropagation(); handleCellClick('${key}', '${i.replace(/'/g, "\\'")}')">${i}</span>`).join('')}</div>`; }
+        
+        function createBadges(f, key){ 
+            const items = Array.isArray(f)?f:String(f||'').split(',').map(s=>s.trim()).filter(v => v && v !== '-'); 
+            if(!items.length) return ""; 
+            return `<div style="display:flex;flex-wrap:wrap;gap:4px;">${items.map(i=>{
+                const encItem = encodeURIComponent(i);
+                return `<span class="cell-badge" onclick="event.stopPropagation(); handleCellClick('${key}', '${encItem}', true)">${i}</span>`;
+            }).join('')}</div>`; 
+        }
         
         function requestSort(id, tabId) { 
             const tab = tabs.find(t => t.id === tabId);
             if (tab.currentSort.key === id) tab.currentSort.asc = !tab.currentSort.asc; 
             else { tab.currentSort.key = id; tab.currentSort.asc = true; } 
+            saveState();
             refreshAll();
         }
 
