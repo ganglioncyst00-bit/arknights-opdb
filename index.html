@@ -12,11 +12,35 @@
         .title-left { display: flex; align-items: center; gap: 12px; }
         .title-logo { height: 32px; width: auto; object-fit: contain; border-radius: 6px; }
         .top-section { padding: 12px 24px 8px 24px; flex-shrink: 0; background: var(--bg-body); overflow: visible; z-index: 100; }
-        .search-container { background: var(--bg-card); backdrop-filter: blur(12px); padding: 16px; border-radius: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); border: 1px solid var(--border-color); position: relative; z-index: 101; }
-        .search-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+        
+        /* 検索コンテナの基本設定 */
+        .search-container { background: var(--bg-card); backdrop-filter: blur(12px); padding: 16px 16px 40px 16px; border-radius: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); border: 1px solid var(--border-color); position: relative; z-index: 101; transition: padding 0.2s ease, margin 0.2s ease; }
+        .search-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; transition: opacity 0.2s; }
         .search-item { display: flex; flex-direction: column; gap: 4px; position: relative; z-index: 1; }
         .search-item:has(.show) { z-index: 1000; }
         .search-item label { font-size: 0.72em; font-weight: 700; color: var(--text-sub); }
+        
+        /* 🌟 検索フィルタを閉じたとき（collapsed）の超省スペース用スタイル */
+        .search-container.collapsed { padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        .search-container.collapsed .search-grid { display: flex; align-items: center; flex-grow: 1; gap: 12px; width: auto; }
+        
+        /* 閉じたときはキーワードアイテムの縦並びを解消し、ラベルと入力を横並びに（同じY座標化） */
+        .search-container.collapsed .keyword-item { flex-direction: row; align-items: center; gap: 8px; flex-grow: 1; }
+        .search-container.collapsed .keyword-item label { margin: 0; white-space: nowrap; font-size: 0.8em; }
+        
+        /* キーワード以外のドロップダウン付き検索項目はすべて非表示 */
+        .search-container.collapsed .search-item:not(.keyword-item) { display: none !important; }
+        
+        /* リセットボタンの行も閉じたときは一列に並べる（既存のmargin-topを打ち消し） */
+        .search-container.collapsed .search-footer-row { margin-top: 0 !important; display: flex; align-items: center; }
+
+        /* 開閉トグルボタン：閉じたときは右端に同じY座標で並べる（絶対配置を解除して通常フローへ） */
+        .toggle-search-btn { position: absolute; bottom: -12px; left: 50%; transform: translateX(-50%); background: var(--bg-header); color: white; border: 1px solid var(--border-color); border-radius: 20px; padding: 3px 18px; font-size: 0.78em; font-weight: bold; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 110; transition: 0.2s; white-space: nowrap; }
+        .toggle-search-btn:hover { background: var(--accent); }
+        
+        .search-container.collapsed .toggle-search-btn { position: static; transform: none; border-radius: 6px; padding: 4px 12px; font-size: 0.8em; box-shadow: none; background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+        .search-container.collapsed .toggle-search-btn:hover { background: var(--accent); color: white; }
+
         .chip-container { min-height: 32px; padding: 2px 32px 2px 8px; border: 1px solid var(--border-color); border-radius: 6px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; background: var(--bg-input); cursor: pointer; position: relative; box-sizing: border-box; }
         .chip { background-color: #5c768d; color: white; padding: 2px 6px; border-radius: 4px; display: flex; align-items: center; font-size: 0.85em; }
         .chip.chip-range { display: inline-flex; align-items: center; padding: 2px 6px; }
@@ -99,11 +123,12 @@
     </h1>
 
     <div class="top-section">
-        <div class="search-container">
+        <div class="search-container" id="searchContainer">
             <div class="search-grid" id="searchGrid"></div>
-            <div style="display:flex; justify-content: flex-end; margin-top:8px;">
+            <div class="search-footer-row" style="display:flex; justify-content: flex-end; margin-top:8px;">
                 <button style="background:none; color:var(--text-sub); border:1px solid var(--text-sub); padding:4px 12px; border-radius:6px; cursor:pointer; font-size:0.8em;" onclick="allClear()">検索リセット</button>
             </div>
+            <button class="toggle-search-btn" id="toggleSearchBtn" onclick="toggleSearchArea()">▲ 検索フィルターを閉じる</button>
         </div>
     </div>
 
@@ -256,6 +281,12 @@
                 cvSearchQuery = currentTab.cvQuery;
             }
 
+            // 開閉状態の復元
+            if (localStorage.getItem('search_area_collapsed') === 'true') {
+                document.getElementById('searchContainer').classList.add('collapsed');
+                document.getElementById('toggleSearchBtn').innerHTML = '▼ 検索フィルターを開く';
+            }
+
             changeLayout(currentLayoutMode, false); 
 
             window.onclick = (e) => { if (!e.target.closest('.search-item')) document.querySelectorAll('.dropdown-list').forEach(l => l.classList.remove('show')); };
@@ -395,7 +426,6 @@
             handleSearch(tabId, side);
         }
 
-        // 検索時の改行や空白の差異をなくすための標準化関数
         function normalizeVal(str) {
             if (str === null || str === undefined) return '';
             return String(str).replace(/\\n/g, '\n').trim();
@@ -421,7 +451,6 @@
                             const rawVals = (Array.isArray(char[k]) ? char[k] : String(char[k] ?? '').split(',')).map(s => normalizeVal(s));
                             if(!tab.selections[k].some(s => rawVals.includes(normalizeVal(s)))) { isFilterMatch = false; break; }
                         } else {
-                            // 比較時に双方を normalizeVal することによって、\n の表現違いを完全に吸収
                             if(!tab.selections[k].some(s => normalizeVal(s) === normalizeVal(char[k]))) { isFilterMatch = false; break; }
                         }
                     }
@@ -438,7 +467,7 @@
                     if(tab.selections.sTrigger.length && !tab.selections.sTrigger.some(sel => normalizeVal(sel) === normalizeVal(s.trigger))) return false;
                     if(tab.selections.sTag.length) {
                         const sTags = (Array.isArray(s.tag) ? s.tag : String(s.tag ?? '').split(',').map(t => t.trim())).map(t => normalizeVal(t));
-                        if(!tab.selections.sTag.some(t => sTags.includes(normalizeVal(t)))) return false;
+                        if(!tab.selections[k].some(t => sTags.includes(normalizeVal(t)))) return false;
                     }
                     if(kw) {
                         if(nameMatched || cvMatched || rangeMatched) return true;
@@ -459,7 +488,7 @@
                     let vB = (tab.currentSort.key === 'op') ? b.name : (b[tab.currentSort.key] ?? '');
                     const numA = parseFloat(vA), numB = parseFloat(vB);
                     if (!isNaN(numA) && !isNaN(numB)) return tab.currentSort.asc ? numA - numB : numB - numA;
-                    return tab.currentSort.asc ? String(vA).localeCompare(String(vB), 'ja') : String(vB).localeCompare(String(vA), 'ja');
+                    return tab.currentSort.asc ? String(vA).localeCompare(String(vA), 'ja') : String(vB).localeCompare(String(vA), 'ja');
                 });
             }
 
@@ -534,7 +563,6 @@
                         else display = hl(rawVal,kw);
                         
                         if (clickableCls) {
-                            // 元データ由来の値をそのまま渡すため、エスケープ等の過剰処理を避けてシンプルにエンコード
                             const encVal = encodeURIComponent(String(isMain ? (char[col.id] ?? '-') : (s ? (s[skillMap[col.id]] ?? '-') : '-')));
                             clickAttr = `onclick="handleCellClick('${col.id}', '${encVal}', true)"`;
                         }
@@ -556,7 +584,9 @@
             const grid = document.getElementById('searchGrid');
             if(!grid) return;
             const labels = { star:'★', rank:'ランク', cv:'CV', jobGroup:'職業', job:'職分', range:'攻撃範囲', atkType:'攻撃区分', cost:'コスト', block:'ブロック数', reDeploy:'再配置', atkSpeed:'攻撃速度', obtain:'入手方法', recruitTags:'募集タグ', sSpType:'SPタイプ', sTrigger:'発動タイプ', sTag:'スキルタグ' };
-            grid.innerHTML = `<div class="search-item"><label>キーワード</label><div class="input-wrapper"><input type="text" id="keywordInput" oninput="updateKeyword(this.value)" placeholder="名前/スキル/効果..."><span class="main-clear-btn" onclick="updateKeyword('')">×</span></div></div>`;
+            
+            grid.innerHTML = `<div class="search-item keyword-item"><label>キーワード</label><div class="input-wrapper"><input type="text" id="keywordInput" oninput="updateKeyword(this.value)" placeholder="名前/スキル/効果..."><span class="main-clear-btn" onclick="updateKeyword('')">×</span></div></div>`;
+            
             filterKeys.forEach(k => {
                 if (k === 'cv') {
                     grid.innerHTML += `<div class="search-item"><label>${labels[k]}</label><div class="chip-container" onclick="toggleDrop(event,'${k}')"><div id="chips-${k}"></div><input type="text" id="cvInput" class="cv-input-style" placeholder="サジェスト検索..." oninput="filterCVOptions(this.value, event)" onclick="toggleDrop(event,'${k}')"><span class="main-clear-btn" onclick="clearSel(event,'${k}')">×</span></div><div class="dropdown-list" id="list-${k}"></div></div>`;
@@ -808,6 +838,21 @@
         function openManual() { window.open('アークナイツオペレーターデータベースマニュアル.html', '_blank'); }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         
+        // 検索エリア開閉トグル関数
+        function toggleSearchArea() {
+            const container = document.getElementById('searchContainer');
+            const btn = document.getElementById('toggleSearchBtn');
+            const isCollapsed = container.classList.toggle('collapsed');
+            
+            if (isCollapsed) {
+                btn.innerHTML = '▼ 検索フィルターを開く';
+                localStorage.setItem('search_area_collapsed', 'true');
+            } else {
+                btn.innerHTML = '▲ 検索フィルターを閉じる';
+                localStorage.setItem('search_area_collapsed', 'false');
+            }
+        }
+
         window.onload = init;
     </script>
 </body>
