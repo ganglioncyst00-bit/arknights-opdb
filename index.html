@@ -20,21 +20,21 @@
         .search-item:has(.show) { z-index: 1000; }
         .search-item label { font-size: 0.72em; font-weight: 700; color: var(--text-sub); }
         
-        /* 🌟 検索フィルタを閉じたとき（collapsed）の超省スペース用スタイル */
+        /* 検索フィルタを閉じたとき（collapsed）のスタイル */
         .search-container.collapsed { padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
         .search-container.collapsed .search-grid { display: flex; align-items: center; flex-grow: 1; gap: 12px; width: auto; }
         
-        /* 閉じたときはキーワードアイテムの縦並びを解消し、ラベルと入力を横並びに（同じY座標化） */
+        /* 閉じたときはキーワードアイテムの縦並びを解消し、ラベルと入力を横並びに */
         .search-container.collapsed .keyword-item { flex-direction: row; align-items: center; gap: 8px; flex-grow: 1; }
         .search-container.collapsed .keyword-item label { margin: 0; white-space: nowrap; font-size: 0.8em; }
         
         /* キーワード以外のドロップダウン付き検索項目はすべて非表示 */
         .search-container.collapsed .search-item:not(.keyword-item) { display: none !important; }
         
-        /* リセットボタンの行も閉じたときは一列に並べる（既存のmargin-topを打ち消し） */
+        /* リセットボタンの行も閉じたときは一列に並べる */
         .search-container.collapsed .search-footer-row { margin-top: 0 !important; display: flex; align-items: center; }
 
-        /* 開閉トグルボタン：閉じたときは右端に同じY座標で並べる（絶対配置を解除して通常フローへ） */
+        /* 開閉トグルボタン */
         .toggle-search-btn { position: absolute; bottom: -12px; left: 50%; transform: translateX(-50%); background: var(--bg-header); color: white; border: 1px solid var(--border-color); border-radius: 20px; padding: 3px 18px; font-size: 0.78em; font-weight: bold; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 110; transition: 0.2s; white-space: nowrap; }
         .toggle-search-btn:hover { background: var(--accent); }
         
@@ -176,6 +176,7 @@
         const MASTER_ORDER_RANK = ['SS', 'S', 'A', 'B', 'C', 'D', 'なし'];
         const MASTER_ORDER_JOBGROUP = ['先鋒', '狙撃', '前衛', '術師', '重装', '医療', '特殊', '補助'];
 
+        // 🌟 ALL_COLUMNS から 'atkType' を削除
         const ALL_COLUMNS = [
             { id: 'op', label: 'オペレーター', width: '130px', sortable: true },
             { id: 'star', label: '★', width: '70px', sortable: true },
@@ -184,7 +185,6 @@
             { id: 'jobGroup', label: '職業', width: '90px', sortable: true },
             { id: 'job', label: '職分', width: '110px', sortable: true }, 
             { id: 'range', label: '攻撃範囲', width: '100px', sortable: true },
-            { id: 'atkType', label: '攻撃区分', width: '90px', sortable: true },
             { id: 'cost', label: 'コスト', width: '60px', sortable: true },
             { id: 'block', label: 'ブロック数', width: '90px', sortable: true }, 
             { id: 'hp', label: 'HP', width: '80px', sortable: true },
@@ -205,7 +205,8 @@
             { id: 'sTag', label: 'スキルタグ', width: '110px' } 
         ];
 
-        const filterKeys = ['star', 'rank', 'cv', 'jobGroup', 'job', 'range', 'atkType', 'cost', 'block', 'reDeploy', 'atkSpeed', 'obtain', 'recruitTags', 'sSpType', 'sTrigger', 'sTag'];
+        // 🌟 filterKeys から 'atkType' を削除
+        const filterKeys = ['star', 'rank', 'cv', 'jobGroup', 'job', 'range', 'cost', 'block', 'reDeploy', 'atkSpeed', 'obtain', 'recruitTags', 'sSpType', 'sTrigger', 'sTag'];
 
         let operatorData = [];
         let tabs = []; 
@@ -232,7 +233,13 @@
             if(localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
             
             const savedCols = localStorage.getItem('column_settings_v40');
-            if(savedCols) colSettings = JSON.parse(savedCols);
+            if(savedCols) {
+                // 過去に保存された設定から 'atkType' を取り除く
+                let parsed = JSON.parse(savedCols).filter(c => c.id !== 'atkType');
+                colSettings = parsed;
+            } else {
+                colSettings = ALL_COLUMNS.map(c => ({ id: c.id, visible: true }));
+            }
             ALL_COLUMNS.forEach(col => { if(!colSettings.some(s => s.id === col.id)) colSettings.push({ id: col.id, visible: true }); });
 
             const savedTabs = localStorage.getItem('tabs_data_v40');
@@ -240,6 +247,10 @@
             
             if (savedTabs) {
                 tabs = JSON.parse(savedTabs);
+                // 既存タブ内の selections からも 'atkType' を除去
+                tabs.forEach(t => {
+                    if (t.selections && t.selections.atkType) delete t.selections.atkType;
+                });
                 currentLayoutMode = savedLayout || 'single';
                 leftTabId = localStorage.getItem('left_tab_id_v40');
                 rightTabId = localStorage.getItem('right_tab_id_v40');
@@ -281,7 +292,6 @@
                 cvSearchQuery = currentTab.cvQuery;
             }
 
-            // 開閉状態の復元
             if (localStorage.getItem('search_area_collapsed') === 'true') {
                 document.getElementById('searchContainer').classList.add('collapsed');
                 document.getElementById('toggleSearchBtn').innerHTML = '▼ 検索フィルターを開く';
@@ -467,7 +477,7 @@
                     if(tab.selections.sTrigger.length && !tab.selections.sTrigger.some(sel => normalizeVal(sel) === normalizeVal(s.trigger))) return false;
                     if(tab.selections.sTag.length) {
                         const sTags = (Array.isArray(s.tag) ? s.tag : String(s.tag ?? '').split(',').map(t => t.trim())).map(t => normalizeVal(t));
-                        if(!tab.selections[k].some(t => sTags.includes(normalizeVal(t)))) return false;
+                        if(!tab.selections.sTag.some(t => sTags.includes(normalizeVal(t)))) return false; // 🌟バグ修正: selections.sTag を参照
                     }
                     if(kw) {
                         if(nameMatched || cvMatched || rangeMatched) return true;
@@ -583,7 +593,8 @@
         function renderSearchGrid() {
             const grid = document.getElementById('searchGrid');
             if(!grid) return;
-            const labels = { star:'★', rank:'ランク', cv:'CV', jobGroup:'職業', job:'職分', range:'攻撃範囲', atkType:'攻撃区分', cost:'コスト', block:'ブロック数', reDeploy:'再配置', atkSpeed:'攻撃速度', obtain:'入手方法', recruitTags:'募集タグ', sSpType:'SPタイプ', sTrigger:'発動タイプ', sTag:'スキルタグ' };
+            // 🌟 labels から 'atkType' を削除
+            const labels = { star:'★', rank:'ランク', cv:'CV', jobGroup:'職業', job:'職分', range:'攻撃範囲', cost:'コスト', block:'ブロック数', reDeploy:'再配置', atkSpeed:'攻撃速度', obtain:'入手方法', recruitTags:'募集タグ', sSpType:'SPタイプ', sTrigger:'発動タイプ', sTag:'スキルタグ' };
             
             grid.innerHTML = `<div class="search-item keyword-item"><label>キーワード</label><div class="input-wrapper"><input type="text" id="keywordInput" oninput="updateKeyword(this.value)" placeholder="名前/スキル/効果..."><span class="main-clear-btn" onclick="updateKeyword('')">×</span></div></div>`;
             
@@ -838,7 +849,6 @@
         function openManual() { window.open('アークナイツオペレーターデータベースマニュアル.html', '_blank'); }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         
-        // 検索エリア開閉トグル関数
         function toggleSearchArea() {
             const container = document.getElementById('searchContainer');
             const btn = document.getElementById('toggleSearchBtn');
