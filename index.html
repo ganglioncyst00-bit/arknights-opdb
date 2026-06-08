@@ -5,59 +5,81 @@
     <title>アークナイツオペレーターデータベース</title>
     <link rel="icon" type="image/png" href="アークナイツ.png">
     <style>
-        :root { --bg-body: #d9e6eb; --bg-content: rgba(255, 255, 255, 0.85); --bg-card: rgba(255, 255, 255, 0.7); --bg-table: #ffffff; --bg-header: #4a6572; --bg-input: rgba(255, 255, 255, 0.9); --text-main: #2c3e50; --text-sub: #5c768d; --border-color: rgba(207, 218, 223, 0.6); --row-hover: #f4f8fa; --modal-bg: white; }
+        :root { --bg-body: #d9e6eb; --bg-content: rgba(255, 255, 255, 0.85); --bg-card: rgba(255, 255, 255, 0.7); --bg-table: #ffffff; --bg-header: #4a6572; --bg-input: rgba(255, 255, 255, 0.9); --text-main: #2c3e50; --text-sub: #5c768d; --border-color: rgba(207, 218, 223, 0.6); --row-hover: #f4f8fa; --modal-bg: white; --accent: #2196f3; }
         [data-theme="dark"] { --bg-body: #1a262b; --bg-content: rgba(38, 50, 56, 0.9); --bg-card: rgba(44, 62, 80, 0.7); --bg-table: #263238; --bg-header: #37474f; --bg-input: #37474f; --text-main: #eceff1; --text-sub: #b0bec5; --border-color: rgba(0, 0, 0, 0.3); --row-hover: #2f3d44; --modal-bg: #263238; }
         html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: var(--bg-body); display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; line-height: 1.5; color: var(--text-main); }
-        h1 { color: var(--text-main); padding: 16px 24px; margin: 0; font-size: 1.6em; font-weight: 700; background: var(--bg-content); backdrop-filter: blur(8px); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
+        h1 { color: var(--text-main); padding: 12px 24px; margin: 0; font-size: 1.4em; font-weight: 700; background: var(--bg-content); backdrop-filter: blur(8px); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
         .title-left { display: flex; align-items: center; gap: 12px; }
-        .title-logo { height: 38px; width: auto; object-fit: contain; border-radius: 8px; }
-        .top-section { padding: 16px 24px; flex-shrink: 0; background: var(--bg-body); overflow: visible; z-index: 100; }
-        .search-container { background: var(--bg-card); backdrop-filter: blur(12px); padding: 20px; border-radius: 14px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1); border: 1px solid var(--border-color); margin-bottom: 12px; position: relative; z-index: 101; }
-        .search-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
-        .search-item { display: flex; flex-direction: column; gap: 5px; position: relative; z-index: 1; }
+        .title-logo { height: 32px; width: auto; object-fit: contain; border-radius: 6px; }
+        .top-section { padding: 12px 24px 8px 24px; flex-shrink: 0; background: var(--bg-body); overflow: visible; z-index: 100; }
+        .search-container { background: var(--bg-card); backdrop-filter: blur(12px); padding: 16px; border-radius: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); border: 1px solid var(--border-color); position: relative; z-index: 101; }
+        .search-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+        .search-item { display: flex; flex-direction: column; gap: 4px; position: relative; z-index: 1; }
         .search-item:has(.show) { z-index: 1000; }
-        .search-item label { font-size: 0.78em; font-weight: 700; color: var(--text-sub); }
-        .chip-container { min-height: 36px; padding: 3px 32px 3px 8px; border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; background: var(--bg-input); cursor: pointer; position: relative; box-sizing: border-box; }
-        .chip { background-color: #5c768d; color: white; padding: 3px 8px; border-radius: 6px; display: flex; align-items: center; font-size: 0.9em; }
-        .chip.chip-range { display: inline-flex; align-items: center; padding: 4px 8px; }
-        .chip .remove-chip { cursor: pointer; margin-right: 6px; border-right: 1px solid rgba(255,255,255,0.3); padding-right: 6px; flex-shrink: 0; }
-        .placeholder { color: #90a4ae; font-size: 0.85em; }
+        .search-item label { font-size: 0.72em; font-weight: 700; color: var(--text-sub); }
+        .chip-container { min-height: 32px; padding: 2px 32px 2px 8px; border: 1px solid var(--border-color); border-radius: 6px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; background: var(--bg-input); cursor: pointer; position: relative; box-sizing: border-box; }
+        .chip { background-color: #5c768d; color: white; padding: 2px 6px; border-radius: 4px; display: flex; align-items: center; font-size: 0.85em; }
+        .chip.chip-range { display: inline-flex; align-items: center; padding: 2px 6px; }
+        .chip .remove-chip { cursor: pointer; margin-right: 4px; border-right: 1px solid rgba(255,255,255,0.3); padding-right: 4px; flex-shrink: 0; }
+        .placeholder { color: #90a4ae; font-size: 0.8em; }
         .input-wrapper { position: relative; display: flex; align-items: center; width: 100%; }
-        .input-wrapper input { width: 100%; padding: 8px 32px 8px 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.9em; box-sizing: border-box; background: var(--bg-input); color: var(--text-main); }
-        .main-clear-btn { position: absolute; right: 10px; cursor: pointer; font-weight: bold; color: #b0bec5; z-index: 10; }
-        .search-footer { display: flex; justify-content: flex-end; align-items: center; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
-        .search-count { font-size: 0.95em; font-weight: 700; color: var(--text-main); background: rgba(74, 101, 114, 0.1); padding: 4px 12px; border-radius: 6px; }
-        .page-size-selector { font-size: 0.9em; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
-        .page-size-selector select { padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); font-weight: 600; cursor: pointer; }
-        .pagination-container { display: flex; align-items: center; gap: 4px; margin-left: auto; }
-        .btn-page { padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); font-size: 0.85em; font-weight: 600; cursor: pointer; transition: 0.1s; }
-        .btn-page:hover:not(:disabled) { background: var(--row-hover); }
-        .btn-page:disabled { opacity: 0.4; cursor: not-allowed; }
-        .btn-page.active { background: var(--bg-header); color: white; border-color: var(--bg-header); }
-        .btn-action { padding: 9px 18px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 0.88em; transition: 0.2s; }
-        .table-container { flex-grow: 1; overflow: auto; margin: 0 24px 24px 24px; background: var(--bg-table); border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.15); border: 1px solid var(--border-color); position: relative; z-index: 10; }
+        .input-wrapper input { width: 100%; padding: 6px 30px 6px 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85em; box-sizing: border-box; background: var(--bg-input); color: var(--text-main); }
+        .main-clear-btn { position: absolute; right: 8px; cursor: pointer; font-weight: bold; color: #b0bec5; z-index: 10; }
+        
+        .tab-wrapper { display: flex; align-items: flex-end; gap: 4px; padding: 0 24px; margin-top: 4px; flex-shrink: 0; z-index: 50; }
+        .tab { padding: 8px 16px; background: rgba(74, 101, 114, 0.2); border: 1px solid var(--border-color); border-bottom: none; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 0.85em; font-weight: 600; color: var(--text-sub); display: flex; align-items: center; gap: 8px; transition: 0.2s; position: relative; min-width: 100px; max-width: 180px; }
+        .tab.active { background: var(--bg-table); color: var(--accent); padding-bottom: 10px; margin-bottom: -1px; z-index: 2; box-shadow: 0 -4px 12px rgba(0,0,0,0.05); }
+        .tab:hover:not(.active) { background: rgba(74, 101, 114, 0.3); }
+        .tab-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-grow: 1; }
+        .tab-close { opacity: 0.5; font-size: 1.2em; line-height: 1; }
+        .tab-close:hover { opacity: 1; color: #f44336; }
+        .btn-add-tab { padding: 4px 12px; background: none; border: 1px dashed var(--text-sub); border-bottom: none; border-radius: 8px 8px 0 0; cursor: pointer; color: var(--text-sub); font-weight: bold; margin-bottom: 2px; }
+        .btn-add-tab:hover { background: rgba(255,255,255,0.2); }
+        
+        /* 画面分割コントロールのスタイル変更 */
+        .layout-controls { margin-left: auto; display: flex; gap: 2px; background: rgba(0,0,0,0.05); padding: 2px; border-radius: 6px; margin-bottom: 2px; }
+        .layout-btn { background: transparent; color: var(--text-sub); border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: 0.2s; }
+        .layout-btn.active { background: var(--accent); color: white; }
+
+        /* ワークスペースのコンテナ（デフォルトは左右並び、縦分割時は縦並び） */
+        .workspace-container { flex-grow: 1; display: flex; overflow: hidden; margin: 0 24px 24px 24px; gap: 12px; }
+        .workspace-container.view-vertical { flex-direction: column; }
+        
+        .table-view-wrapper { flex: 1; display: flex; flex-direction: column; background: var(--bg-table); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); border: 1px solid var(--border-color); overflow: hidden; position: relative; }
+        .table-view-wrapper.active-side { border: 2px solid var(--accent); }
+        .table-header-info { padding: 8px 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.02); }
+        .table-container { flex-grow: 1; overflow: auto; position: relative; }
+        
         table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
-        th { background-color: var(--bg-header); color: white; position: sticky; top: 0; z-index: 20; padding: 12px 14px; text-align: left; border-bottom: 2px solid #37474f; font-size: 0.85em; }
+        th { background-color: var(--bg-header); color: white; position: sticky; top: 0; z-index: 20; padding: 10px 12px; text-align: left; border-bottom: 2px solid #37474f; font-size: 0.8em; }
         th.sortable { cursor: pointer; }
-        td { padding: 12px 14px; border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); font-size: 0.88em; vertical-align: middle; background: transparent; word-wrap: break-word; white-space: normal; }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); font-size: 0.85em; vertical-align: middle; background: transparent; word-wrap: break-word; white-space: normal; }
         .sticky-col { position: sticky; left: 0; z-index: 15; background-color: var(--bg-table) !important; border-right: 2px solid var(--border-color) !important; }
         th.sticky-col { z-index: 25; background-color: var(--bg-header) !important; }
         td.clickable-cell { cursor: pointer; }
         td.clickable-cell:hover { background-color: rgba(74, 101, 114, 0.1) !important; }
         tr:hover td { background-color: var(--row-hover) !important; }
-        .cell-badge { background-color: rgba(176, 190, 197, 0.2); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 6px; padding: 2px 8px; font-size: 0.82em; font-weight: 600; margin: 1px; display: inline-block; cursor: pointer; }
+        .cell-badge { background-color: rgba(176, 190, 197, 0.2); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 6px; padding: 1px 6px; font-size: 0.8em; font-weight: 600; margin: 1px; display: inline-block; cursor: pointer; }
         .highlight { background-color: #fff59d; color: #2c3e50; font-weight: 600; }
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); }
-        .modal-content { background: var(--modal-bg); margin: 5% auto; padding: 24px; width: 90%; max-height: 85%; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); display: flex; flex-direction: column; overflow: hidden; color: var(--text-main); }
+        .modal-content { background: var(--modal-bg); margin: 5% auto; padding: 20px; width: 90%; max-height: 85%; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); display: flex; flex-direction: column; overflow: hidden; color: var(--text-main); }
         .dropdown-list { display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--bg-table); border-radius: 8px; z-index: 2000; max-height: 280px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border-color); }
-        .dropdown-item { padding: 9px 12px; cursor: pointer; border-bottom: 1px solid var(--border-color); font-size: 0.9em; }
+        .dropdown-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--border-color); font-size: 0.85em; }
         .dropdown-item.selected { background-color: #4a6572; color: white; font-weight: 600; }
         .show { display: block; }
         
-        .range-monospace { font-family: monospace; font-size: 14px; letter-spacing: 0px; line-height: 1.1; white-space: pre-wrap; pointer-events: none; display: inline-block; text-align: left; }
+        .range-monospace { font-family: monospace; font-size: 13px; letter-spacing: 0px; line-height: 1.1; white-space: pre-wrap; pointer-events: none; display: inline-block; text-align: left; }
         .range-invisible-space { opacity: 0 !important; visibility: hidden; }
         .table-container .range-monospace { pointer-events: auto; }
-        .cv-input-style { width: 100%; border: none; background: transparent; font-size: 0.9em; color: var(--text-main); outline: none; padding: 4px 0; min-width: 60px; flex-grow: 1; }
+        .cv-input-style { width: 100%; border: none; background: transparent; font-size: 0.85em; color: var(--text-main); outline: none; padding: 4px 0; min-width: 60px; flex-grow: 1; }
+        
+        .search-footer-mini { display: flex; align-items: center; gap: 8px; font-size: 0.85em; }
+        .page-size-selector { font-size: 0.9em; color: var(--text-main); display: flex; align-items: center; gap: 4px; margin-right: 12px; }
+        .page-size-selector select { padding: 2px 4px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); cursor: pointer; }
+        .pagination-mini { display: flex; gap: 2px; align-items: center; }
+        .btn-page-mini { padding: 2px 6px; font-size: 0.8em; cursor: pointer; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); border-radius: 4px; }
+        .btn-page-mini:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-page-mini.active { background: var(--bg-header); color: white; }
     </style>
     <script>
         document.write('<script src="data.js?v=' + new Date().getTime() + '"><\/script>');
@@ -68,12 +90,12 @@
     <h1>
         <div class="title-left">
             <img src="アークナイツ.png" class="title-logo" alt="" onerror="this.style.display='none'">
-            <span>アークナイツオペレーターデータベース</span>
+            <span>アークナイツデータベース</span>
         </div>
-        <div>
-            <button class="btn-action" style="background:#455a64; color:#fff; margin-right:8px;" onclick="toggleDarkMode()">🌓 テーマ切替</button>
-            <button class="btn-action" style="background:#607d8b; color:#fff; margin-right:8px;" onclick="openColumnModal()">⚙ 列表示設定</button>
-            <button class="btn-action" style="background:#4caf50; color:#fff; margin-right:8px;" onclick="exportData()">JSON出力</button>
+        <div style="display:flex; gap:8px;">
+            <button class="btn-action" style="background:#455a64; color:#fff;" onclick="toggleDarkMode()">🌓 テーマ</button>
+            <button class="btn-action" style="background:#607d8b; color:#fff;" onclick="openColumnModal()">⚙ 列設定</button>
+            <button class="btn-action" style="background:#4caf50; color:#fff;" onclick="exportData()">JSON</button>
             <button class="btn-action" style="background:#009688; color:#fff;" onclick="openManual()">❔ ヘルプ</button>
         </div>
     </h1>
@@ -81,29 +103,47 @@
     <div class="top-section">
         <div class="search-container">
             <div class="search-grid" id="searchGrid"></div>
-            <div class="search-footer">
-                <div class="page-size-selector">
-                    表示件数:
-                    <select id="pageSizeSelect" onchange="changePageSize(this.value)">
-                        <option value="10">10件</option>
-                        <option value="20">20件</option>
-                        <option value="50">50件</option>
-                        <option value="100">100件</option>
-                        <option value="all">全件</option>
-                    </select>
-                </div>
-                <div class="pagination-container" id="paginationNav"></div>
-                <div class="search-count" id="searchCount">検索結果: 0 件</div>
-                <button style="background:none; color:var(--text-sub); border:1px solid var(--text-sub); padding:6px 14px; border-radius:6px; cursor:pointer; font-weight:600;" onclick="allClear()">検索条件リセット</button>
+            <div style="display:flex; justify-content: flex-end; margin-top:8px;">
+                <button style="background:none; color:var(--text-sub); border:1px solid var(--text-sub); padding:4px 12px; border-radius:6px; cursor:pointer; font-size:0.8em;" onclick="allClear()">検索リセット</button>
             </div>
         </div>
     </div>
 
-    <div class="table-container">
-        <table id="mainTable">
-            <thead id="tableHead"></thead>
-            <tbody id="tableBody"></tbody>
-        </table>
+    <div class="tab-wrapper" id="tabBar">
+        <button class="btn-add-tab" onclick="addTab()">＋</button>
+        
+        <div class="layout-controls">
+            <button class="layout-btn active" id="layout-single" onclick="changeLayout('single')">▢ 通常</button>
+            <button class="layout-btn" id="layout-horizontal" onclick="changeLayout('horizontal')">◧ 左右分割</button>
+            <button class="layout-btn" id="layout-vertical" onclick="changeLayout('vertical')">◪ 上下分割</button>
+        </div>
+    </div>
+
+    <div class="workspace-container" id="workspace">
+        <div class="table-view-wrapper active-side" id="leftView" onclick="setActiveSide('left')">
+            <div class="table-header-info">
+                <div id="leftTabLabel" style="font-weight:700; font-size:0.85em; color:var(--accent);"></div>
+                <div class="search-footer-mini" id="leftFooter"></div>
+            </div>
+            <div class="table-container">
+                <table id="leftTable">
+                    <thead id="leftHead"></thead>
+                    <tbody id="leftBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="table-view-wrapper" id="rightView" style="display:none;" onclick="setActiveSide('right')">
+            <div class="table-header-info">
+                <div id="rightTabLabel" style="font-weight:700; font-size:0.85em; color:var(--accent);"></div>
+                <div class="search-footer-mini" id="rightFooter"></div>
+            </div>
+            <div class="table-container">
+                <table id="rightTable">
+                    <thead id="rightHead"></thead>
+                    <tbody id="rightBody"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <div id="columnModal" class="modal"><div class="modal-content" style="width:400px; margin: 5% auto;"><h3>列設定</h3><div id="columnListContainer" style="max-height:400px; overflow-y:auto; margin-bottom:20px;"></div><div style="text-align: right;"><button onclick="closeModal('columnModal')" class="btn-action">キャンセル</button><button onclick="saveColumnSettings()" class="btn-action" style="background:#2196f3; color:white; margin-left:10px;">保存</button></div></div></div>
@@ -113,13 +153,6 @@
         const MASTER_ORDER_RANK = ['SS', 'S', 'A', 'B', 'C', 'D', 'なし'];
         const MASTER_ORDER_JOBGROUP = ['先鋒', '狙撃', '前衛', '術師', '重装', '医療', '特殊', '補助'];
 
-        let operatorData = []; 
-        let currentSort = { key: null, asc: true };
-        let pageSize = "50";
-        let currentPage = 1; 
-        let cvSearchQuery = ""; 
-        
-        /* 【修正】ALL_COLUMNS 内の「初期」➔「初期SP」、「必要」➔「必要SP」へ変更 */
         const ALL_COLUMNS = [
             { id: 'op', label: 'オペレーター', width: '130px', sortable: true },
             { id: 'star', label: '★', width: '70px', sortable: true },
@@ -149,78 +182,224 @@
             { id: 'sTag', label: 'スキルタグ', width: '110px' } 
         ];
 
-        let colSettings = ALL_COLUMNS.map(c => ({ id: c.id, visible: true }));
         const filterKeys = ['star', 'rank', 'cv', 'jobGroup', 'job', 'range', 'atkType', 'cost', 'block', 'reDeploy', 'atkSpeed', 'obtain', 'recruitTags', 'sSpType', 'sTrigger', 'sTag'];
-        const selections = {}; filterKeys.forEach(k => selections[k] = []);
+
+        let operatorData = [];
+        let tabs = []; 
+        let activeTabId = null;
+        let currentLayoutMode = 'single'; // 'single', 'horizontal', 'vertical'
+        let leftTabId = null;
+        let rightTabId = null;
+        let activeSide = 'left'; 
+        let colSettings = ALL_COLUMNS.map(c => ({ id: c.id, visible: true }));
+        let cvSearchQuery = "";
+        let tabCounter = 0;
 
         function init() {
             operatorData = (typeof DEFAULT_MASTER_DATA !== 'undefined') ? DEFAULT_MASTER_DATA : [];
-            
             if(localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+            
             const savedCols = localStorage.getItem('column_settings_v40');
             if(savedCols) colSettings = JSON.parse(savedCols);
-            
-            ALL_COLUMNS.forEach(col => {
-                if(!colSettings.some(s => s.id === col.id)) {
-                    colSettings.push({ id: col.id, visible: true });
-                }
-            });
+            ALL_COLUMNS.forEach(col => { if(!colSettings.some(s => s.id === col.id)) colSettings.push({ id: col.id, visible: true }); });
 
-            const savedPageSize = localStorage.getItem('pageSizeSetting_v74');
-            if(savedPageSize) pageSize = savedPageSize;
+            // 1. 初期のタブ作成
+            tabCounter++;
+            const sels = {}; filterKeys.forEach(k => sels[k] = []);
+            const firstTab = {
+                id: 'tab-' + Date.now() + '-' + tabCounter,
+                name: "検索 1",
+                selections: sels,
+                keyword: "",
+                cvQuery: "",
+                currentSort: { key: null, asc: true },
+                currentPage: 1,
+                pageSize: 50
+            };
+            tabs.push(firstTab);
+            leftTabId = firstTab.id;
+            activeTabId = firstTab.id;
+            activeSide = 'left';
 
-            document.getElementById('pageSizeSelect').value = pageSize;
+            // 2. 検索パネル作成
             renderSearchGrid();
-            handleSearch();
+
+            // 3. 全体リフレッシュ（初期描画）
+            refreshAll();
+
             window.onclick = (e) => { if (!e.target.closest('.search-item')) document.querySelectorAll('.dropdown-list').forEach(l => l.classList.remove('show')); };
         }
 
-        function changePageSize(value) {
-            pageSize = value;
-            localStorage.setItem('pageSizeSetting_v74', value);
-            currentPage = 1; 
-            handleSearch();
+        function createNewTabObj(name) {
+            tabCounter++;
+            const sels = {}; filterKeys.forEach(k => sels[k] = []);
+            return {
+                id: 'tab-' + Date.now() + '-' + tabCounter,
+                name: name || `検索 ${tabCounter}`,
+                selections: sels,
+                keyword: "",
+                cvQuery: "",
+                currentSort: { key: null, asc: true },
+                currentPage: 1,
+                pageSize: 50
+            };
         }
 
-        function setPage(pageNumber) {
-            currentPage = pageNumber;
-            handleSearch();
-        }
-
-        function renderPaginationControls(totalItems) {
-            const nav = document.getElementById('paginationNav');
-            if (pageSize === "all" || totalItems <= parseInt(pageSize)) {
-                nav.innerHTML = ""; 
-                return;
+        function addTab(name) {
+            const newTab = createNewTabObj(name);
+            tabs.push(newTab);
+            if (currentLayoutMode !== 'single') {
+                switchTab(newTab.id, activeSide === 'left' ? 'left' : 'right');
+            } else {
+                switchTab(newTab.id, 'left');
             }
+        }
 
-            const size = parseInt(pageSize);
-            const totalPages = Math.ceil(totalItems / size);
+        function switchTab(id, side) {
+            if (side === 'left') leftTabId = id;
+            else rightTabId = id;
             
-            if (currentPage > totalPages) currentPage = totalPages;
-            if (currentPage < 1) currentPage = 1;
+            activeTabId = id;
+            activeSide = side;
+            
+            const tab = tabs.find(t => t.id === id);
+            cvSearchQuery = tab.cvQuery;
+            document.getElementById('keywordInput').value = tab.keyword;
+            const cvIn = document.getElementById('cvInput');
+            if(cvIn) cvIn.value = tab.cvQuery;
 
-            let html = "";
-            html += `<button class="btn-page" ${currentPage === 1 ? 'disabled' : ''} onclick="setPage(${currentPage - 1})">◀</button>`;
+            refreshAll();
+        }
+
+        function deleteTab(e, id) {
+            e.stopPropagation();
+            if (tabs.length <= 1) return;
+            tabs = tabs.filter(t => t.id !== id);
             
-            for (let i = 1; i <= totalPages; i++) {
-                if (totalPages > 6) {
-                    if (i !== 1 && i !== totalPages && Math.abs(i - currentPage) > 1) {
-                        if (i === 2 && currentPage > 3) html += `<span style="color:var(--text-sub);padding:0 2px;">...</span>`;
-                        if (i === totalPages - 1 && currentPage < totalPages - 2) html += `<span style="color:var(--text-sub);padding:0 2px;">...</span>`;
-                        continue;
-                    }
+            if (leftTabId === id) leftTabId = tabs[0].id;
+            if (rightTabId === id) rightTabId = tabs[0].id;
+            if (activeTabId === id) activeTabId = tabs[0].id;
+            
+            refreshAll();
+        }
+
+        // レイアウトを切り替える新関数
+        function changeLayout(mode) {
+            currentLayoutMode = mode;
+            
+            // ボタンの選択状態クラスをリセット
+            document.getElementById('layout-single').classList.toggle('active', mode === 'single');
+            document.getElementById('layout-horizontal').classList.toggle('active', mode === 'horizontal');
+            document.getElementById('layout-vertical').classList.toggle('active', mode === 'vertical');
+            
+            const workspace = document.getElementById('workspace');
+            const rightView = document.getElementById('rightView');
+            
+            if (mode === 'single') {
+                workspace.classList.remove('view-vertical');
+                rightView.style.display = 'none';
+                activeSide = 'left';
+                activeTabId = leftTabId;
+            } else if (mode === 'horizontal') {
+                workspace.classList.remove('view-vertical');
+                rightView.style.display = 'flex';
+                ensureSecondTab();
+            } else if (mode === 'vertical') {
+                workspace.classList.add('view-vertical');
+                rightView.style.display = 'flex';
+                ensureSecondTab();
+            }
+            refreshAll();
+        }
+
+        // 分割時に2つ目のタブが存在することを確認する補助関数
+        function ensureSecondTab() {
+            if (tabs.length > 1) {
+                if (!rightTabId || rightTabId === leftTabId) {
+                    rightTabId = tabs.find(t => t.id !== leftTabId).id;
                 }
-                html += `<button class="btn-page ${i === currentPage ? 'active' : ''}" onclick="setPage(${i})">${i}</button>`;
+            } else {
+                const newTab = createNewTabObj();
+                tabs.push(newTab);
+                rightTabId = newTab.id;
             }
-
-            html += `<button class="btn-page" ${currentPage === totalPages ? 'disabled' : ''} onclick="setPage(${currentPage + 1})">▶</button>`;
-            
-            nav.innerHTML = html;
         }
 
-        function handleSearch() {
-            const kw = document.getElementById('keywordInput')?.value.toLowerCase() || "";
+        function setActiveSide(side) {
+            activeSide = side;
+            activeTabId = (side === 'left') ? leftTabId : rightTabId;
+            
+            document.getElementById('leftView').classList.toggle('active-side', side === 'left');
+            document.getElementById('rightView').classList.toggle('active-side', side === 'right');
+            
+            const tab = tabs.find(t => t.id === activeTabId);
+            if(!tab) return;
+            cvSearchQuery = tab.cvQuery;
+            document.getElementById('keywordInput').value = tab.keyword;
+            const cvIn = document.getElementById('cvInput');
+            if(cvIn) cvIn.value = tab.cvQuery;
+            
+            updateFilters();
+        }
+
+        function changePageSizeForTab(tabId, value, side) {
+            const tab = tabs.find(t => t.id === tabId);
+            if(!tab) return;
+            tab.pageSize = value;
+            tab.currentPage = 1;
+            handleSearch(tabId, side);
+        }
+
+        function setPageForTab(tabId, pageNum, side) {
+            const tab = tabs.find(t => t.id === tabId);
+            if(!tab) return;
+            tab.currentPage = pageNum;
+            handleSearch(tabId, side);
+        }
+
+        function refreshAll() {
+            renderTabs();
+            if (leftTabId) handleSearch(leftTabId, 'left');
+            if (currentLayoutMode !== 'single' && rightTabId) handleSearch(rightTabId, 'right');
+            updateFilters();
+        }
+
+        function renderTabs() {
+            const bar = document.getElementById('tabBar');
+            const addBtn = bar.querySelector('.btn-add-tab');
+            const oldTabs = bar.querySelectorAll('.tab');
+            oldTabs.forEach(t => t.remove());
+
+            tabs.forEach(t => {
+                const tabEl = document.createElement('div');
+                const isActive = (t.id === activeTabId);
+                
+                tabEl.className = `tab ${isActive ? 'active' : ''}`;
+                tabEl.onclick = () => switchTab(t.id, currentLayoutMode !== 'single' ? activeSide : 'left');
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'tab-name';
+                nameSpan.textContent = t.name;
+                nameSpan.ondblclick = (e) => {
+                    const newName = prompt("タブ名を変更:", t.name);
+                    if (newName) { t.name = newName; renderTabs(); }
+                };
+
+                const closeBtn = document.createElement('span');
+                closeBtn.className = 'tab-close';
+                closeBtn.innerHTML = '×';
+                closeBtn.onclick = (e) => deleteTab(e, t.id);
+
+                tabEl.appendChild(nameSpan);
+                if (tabs.length > 1) tabEl.appendChild(closeBtn);
+                bar.insertBefore(tabEl, addBtn);
+            });
+        }
+
+        function handleSearch(tabId, side) {
+            const tab = tabs.find(t => t.id === tabId);
+            if (!tab) return;
+            const kw = tab.keyword.toLowerCase();
             let filtered = [];
             
             operatorData.forEach((char, originalIdx) => {
@@ -228,22 +407,17 @@
                 for(let k of filterKeys) {
                     if (k === 'cv') {
                         const targetCV = String(char.cv ?? '').toLowerCase();
-                        if (selections.cv.length) {
-                            if (!selections.cv.some(s => targetCV === s.toLowerCase())) { isFilterMatch = false; break; }
-                        }
-                        if (cvSearchQuery) {
-                            if (!targetCV.includes(cvSearchQuery)) { isFilterMatch = false; break; }
-                        }
+                        if (tab.selections.cv.length && !tab.selections.cv.some(s => targetCV === s.toLowerCase())) { isFilterMatch = false; break; }
+                        if (tab.cvQuery && !targetCV.includes(tab.cvQuery.toLowerCase())) { isFilterMatch = false; break; }
                         continue;
                     }
-
-                    if(selections[k] && selections[k].length && !['sTag', 'sSpType', 'sTrigger'].includes(k)) {
+                    if(tab.selections[k] && tab.selections[k].length && !['sTag', 'sSpType', 'sTrigger'].includes(k)) {
                         const val = char[k];
                         if(['obtain', 'recruitTags'].includes(k)) {
                             const vals = Array.isArray(val) ? val : String(val??'').split(',').map(s=>s.trim());
-                            if(!selections[k].some(s => vals.includes(s))) { isFilterMatch = false; break; }
+                            if(!tab.selections[k].some(s => vals.includes(s))) { isFilterMatch = false; break; }
                         } else {
-                            if(!selections[k].includes(String(val ?? '-'))) { isFilterMatch = false; break; }
+                            if(!tab.selections[k].includes(String(val ?? '-'))) { isFilterMatch = false; break; }
                         }
                     }
                 }
@@ -255,14 +429,12 @@
 
                 const filteredSkills = (char.skills || []).filter(s => {
                     if(!s) return false;
-                    if(selections.sSpType.length && !selections.sSpType.includes(String(s.spType ?? '-'))) return false;
-                    if(selections.sTrigger.length && !selections.sTrigger.includes(String(s.trigger ?? '-'))) return false;
-                    
-                    if(selections.sTag.length) {
-                        const sTags = Array.isArray(s.tag) ? s.tag : String(s.tag ?? '-').split(',').map(t=>t.trim());
-                        if(!selections.sTag.some(t => sTags.includes(t))) return false;
+                    if(tab.selections.sSpType.length && !tab.selections.sSpType.includes(String(s.spType ?? '-'))) return false;
+                    if(tab.selections.sTrigger.length && !tab.selections.sTrigger.includes(String(s.trigger ?? '-'))) return false;
+                    if(tab.selections.sTag.length) {
+                        const sTags = Array.isArray(s.tag) ? s.tag : String(s.tag ?? '-').split(',').map(t => t.trim());
+                        if(!tab.selections.sTag.some(t => sTags.includes(t))) return false;
                     }
-                    
                     if(kw) {
                         if(nameMatched || cvMatched || rangeMatched) return true;
                         return (s.name || "").toLowerCase().includes(kw) || (s.effect || "").toLowerCase().includes(kw);
@@ -270,35 +442,23 @@
                     return true;
                 });
 
-                const hasSkillFilter = selections.sSpType.length || selections.sTrigger.length || selections.sTag.length;
+                const hasSkillFilter = tab.selections.sSpType.length || tab.selections.sTrigger.length || tab.selections.sTag.length;
                 if ((kw || hasSkillFilter) && !nameMatched && !cvMatched && !rangeMatched && filteredSkills.length === 0) return;
                 const displaySkills = (kw || hasSkillFilter) ? (filteredSkills.length > 0 ? filteredSkills : (char.skills || [null])) : (char.skills || [null]);
-
                 filtered.push({ ...char, _originalIdx: originalIdx, _displaySkills: displaySkills });
             });
 
-            document.getElementById('searchCount').innerText = `検索結果: ${filtered.length} 件`;
-
-            if (currentSort.key) {
+            if (tab.currentSort.key) {
                 filtered.sort((a, b) => {
-                    let vA = (currentSort.key === 'op') ? a.name : (a[currentSort.key] ?? '');
-                    let vB = (currentSort.key === 'op') ? b.name : (b[currentSort.key] ?? '');
+                    let vA = (tab.currentSort.key === 'op') ? a.name : (a[tab.currentSort.key] ?? '');
+                    let vB = (tab.currentSort.key === 'op') ? b.name : (b[tab.currentSort.key] ?? '');
                     const numA = parseFloat(vA), numB = parseFloat(vB);
-                    if (!isNaN(numA) && !isNaN(numB)) return currentSort.asc ? numA - numB : numB - numA;
-                    return currentSort.asc ? String(vA).localeCompare(String(vB), 'ja') : String(vB).localeCompare(String(vA), 'ja');
+                    if (!isNaN(numA) && !isNaN(numB)) return tab.currentSort.asc ? numA - numB : numB - numA;
+                    return tab.currentSort.asc ? String(vA).localeCompare(String(vB), 'ja') : String(vB).localeCompare(String(vA), 'ja');
                 });
             }
 
-            renderPaginationControls(filtered.length);
-
-            let displayData = filtered;
-            if (pageSize !== "all") {
-                const size = parseInt(pageSize);
-                const start = (currentPage - 1) * size;
-                displayData = filtered.slice(start, start + size);
-            }
-
-            renderTable(displayData);
+            renderTable(filtered, tab, side);
         }
 
         function formatRangeText(text) {
@@ -307,18 +467,45 @@
             return formatted.replace(/ /g, '<span class="range-invisible-space">□</span>');
         }
 
-        function renderTable(data) {
-            const kw = document.getElementById('keywordInput')?.value.toLowerCase() || "";
+        function renderTable(allData, tab, side) {
+            const kw = tab.keyword.toLowerCase();
             const cols = colSettings.filter(s => s.visible).map(s => ALL_COLUMNS.find(c => c.id === s.id)).filter(Boolean);
             
-            document.getElementById("tableHead").innerHTML = `<tr>${cols.map(c => {
-                const icon = c.sortable ? (currentSort.key === c.id ? (currentSort.asc ? ' ▲' : ' ▼') : ' <span style="opacity:0.3">⇅</span>') : '';
+            document.getElementById(`${side}TabLabel`).innerText = `${tab.name} (${allData.length}件)`;
+            
+            let displayData = allData;
+            let totalPages = 1;
+            if (tab.pageSize !== "all") {
+                const size = parseInt(tab.pageSize);
+                totalPages = Math.ceil(allData.length / size) || 1;
+                if (tab.currentPage > totalPages) tab.currentPage = totalPages;
+                if (tab.currentPage < 1) tab.currentPage = 1;
+                const start = (tab.currentPage - 1) * size;
+                displayData = allData.slice(start, start + size);
+            }
+
+            const footer = document.getElementById(`${side}Footer`);
+            let pSizeOptions = ["10", "20", "50", "100", "all"].map(v => `<option value="${v}" ${tab.pageSize === v ? 'selected' : ''}>${v === 'all' ? '全件' : v + '件'}</option>`).join('');
+            
+            footer.innerHTML = `
+                <div class="page-size-selector">
+                    表示: <select onchange="changePageSizeForTab('${tab.id}', this.value, '${side}')">${pSizeOptions}</select>
+                </div>
+                <div class="pagination-mini">
+                    <button class="btn-page-mini" ${tab.currentPage === 1 ? 'disabled' : ''} onclick="setPageForTab('${tab.id}', ${tab.currentPage - 1}, '${side}')">◀</button>
+                    <span style="padding:0 4px; font-weight:bold;">${tab.currentPage} / ${totalPages}</span>
+                    <button class="btn-page-mini" ${tab.currentPage === totalPages ? 'disabled' : ''} onclick="setPageForTab('${tab.id}', ${tab.currentPage + 1}, '${side}')">▶</button>
+                </div>
+            `;
+
+            document.getElementById(`${side}Head`).innerHTML = `<tr>${cols.map(c => {
+                const icon = c.sortable ? (tab.currentSort.key === c.id ? (tab.currentSort.asc ? ' ▲' : ' ▼') : ' <span style="opacity:0.3">⇅</span>') : '';
                 const stickyCls = (c.id === 'op') ? 'sticky-col' : '';
-                return `<th style="width:${c.width}" ${c.sortable ? `onclick="requestSort('${c.id}')" class="sortable ${stickyCls}"` : `class="${stickyCls}"`}>${c.label}${icon}</th>`;
+                return `<th style="width:${c.width}" ${c.sortable ? `onclick="requestSort('${c.id}', '${tab.id}')" class="sortable ${stickyCls}"` : `class="${stickyCls}"`}>${c.label}${icon}</th>`;
             }).join('')}</tr>`;
 
             let html = "";
-            data.forEach(char => {
+            displayData.forEach(char => {
                 const visibleSkills = char._displaySkills || (char.skills || [null]);
                 const skillMap = { sName:'name', sSpType:'spType', sTrigger:'trigger', sInit:'initSp', sReq:'reqSp', sDur:'duration', sEffect:'effect', sTag:'tag' };
 
@@ -334,134 +521,106 @@
                         let clickableCls = (isSearchable) ? 'clickable-cell' : '';
                         let clickAttr = "";
 
-                        if (typeof rawVal === 'string' && col.id !== 'range') {
-                            rawVal = rawVal.replace(/\\n/g, '\n');
-                        }
+                        if (typeof rawVal === 'string' && col.id !== 'range') rawVal = rawVal.replace(/\\n/g, '\n');
 
-                        if (col.id === 'op') { 
-                            display = `<strong>${hl(rawVal,kw)}</strong>`; 
-                        } else if (['obtain','recruitTags','sTag'].includes(col.id)) { 
-                            display = createBadges(rawVal, col.id); 
-                            clickableCls = ""; 
-                        } else if (col.id === 'range') {
-                            display = `<div class="range-monospace">${formatRangeText(hl(rawVal,kw))}</div>`;
-                        } else { 
-                            display = hl(rawVal,kw); 
-                        }
+                        if (col.id === 'op') display = `<strong>${hl(rawVal,kw)}</strong>`;
+                        else if (['obtain','recruitTags','sTag'].includes(col.id)) { display = createBadges(rawVal, col.id); clickableCls = ""; }
+                        else if (col.id === 'range') display = `<div class="range-monospace">${formatRangeText(hl(rawVal,kw))}</div>`;
+                        else display = hl(rawVal,kw);
                         
-                        if (clickableCls) { clickAttr = `onclick="handleCellClick('${col.id}', '${String(rawVal).replace(/\n/g, "\\n").replace(/'/g, "\\'")}')"`; }
+                        if (clickableCls) clickAttr = `onclick="handleCellClick('${col.id}', '${String(rawVal).replace(/\n/g, "\\n").replace(/'/g, "\\'")}')"`;
                         const stickyCls = (col.id === 'op') ? 'sticky-col' : '';
                         row += `<td ${isMain ? `rowspan="${visibleSkills.length}"` : ''} class="${clickableCls} ${stickyCls}" ${clickAttr}>${display}</td>`;
                     });
                     html += row + '</tr>';
                 });
             });
-            document.getElementById("tableBody").innerHTML = html;
+            document.getElementById(`${side}Body`).innerHTML = html;
         }
 
         function handleCellClick(key, val) {
-            if(val === '-' || !val) return;
             const v = val.replace(/\\n/g, '\n').trim();
             addOrToggleSelection(key, v);
         }
 
         function renderSearchGrid() {
             const grid = document.getElementById('searchGrid');
-            const labels = { 
-                star:'★', rank:'ランク', cv:'CV', jobGroup:'職業', job:'職分', range:'攻撃範囲', 
-                atkType:'攻撃区分', cost:'コスト', block:'ブロック数', reDeploy:'再配置', 
-                atkSpeed:'攻撃速度', obtain:'入手方法', recruitTags:'募集タグ', 
-                sSpType:'SPタイプ', sTrigger:'発動タイプ', sTag:'スキルタグ' 
-            };
-            
-            grid.innerHTML = `<div class="search-item"><label>キーワード</label><div class="input-wrapper"><input type="text" id="keywordInput" oninput="currentPage=1; handleSearch()" placeholder="名前/スキル/効果..."><span class="main-clear-btn" onclick="document.getElementById('keywordInput').value='';currentPage=1;handleSearch()">×</span></div></div>`;
-            
+            if(!grid) return;
+            const labels = { star:'★', rank:'ランク', cv:'CV', jobGroup:'職業', job:'職分', range:'攻撃範囲', atkType:'攻撃区分', cost:'コスト', block:'ブロック数', reDeploy:'再配置', atkSpeed:'攻撃速度', obtain:'入手方法', recruitTags:'募集タグ', sSpType:'SPタイプ', sTrigger:'発動タイプ', sTag:'スキルタグ' };
+            grid.innerHTML = `<div class="search-item"><label>キーワード</label><div class="input-wrapper"><input type="text" id="keywordInput" oninput="updateKeyword(this.value)" placeholder="名前/スキル/効果..."><span class="main-clear-btn" onclick="updateKeyword('')">×</span></div></div>`;
             filterKeys.forEach(k => {
                 if (k === 'cv') {
-                    grid.innerHTML += `<div class="search-item"><label>${labels[k]}</label><div class="chip-container" onclick="toggleDrop(event,'${k}')"><div id="chips-${k}"></div><input type="text" id="cvInput" class="cv-input-style" placeholder="選択または入力..." oninput="filterCVOptions(this.value, event)" onclick="toggleDrop(event,'${k}')"><span class="main-clear-btn" onclick="clearSel(event,'${k}')">×</span></div><div class="dropdown-list" id="list-${k}"></div></div>`;
+                    grid.innerHTML += `<div class="search-item"><label>${labels[k]}</label><div class="chip-container" onclick="toggleDrop(event,'${k}')"><div id="chips-${k}"></div><input type="text" id="cvInput" class="cv-input-style" placeholder="サジェスト検索..." oninput="filterCVOptions(this.value, event)" onclick="toggleDrop(event,'${k}')"><span class="main-clear-btn" onclick="clearSel(event,'${k}')">×</span></div><div class="dropdown-list" id="list-${k}"></div></div>`;
                 } else {
                     grid.innerHTML += `<div class="search-item"><label>${labels[k]}</label><div class="chip-container" onclick="toggleDrop(event,'${k}')"><div id="chips-${k}"></div><span class="placeholder" id="ph-${k}">選択なし</span><span class="main-clear-btn" onclick="clearSel(event,'${k}')">×</span></div><div class="dropdown-list" id="list-${k}"></div></div>`;
                 }
             });
-            updateFilters();
         }
-        
+
+        function updateKeyword(val) {
+            const tab = tabs.find(t => t.id === activeTabId);
+            if(!tab) return;
+            tab.keyword = val;
+            tab.currentPage = 1;
+            document.getElementById('keywordInput').value = val;
+            refreshAll();
+        }
+
         function filterCVOptions(val, event) {
             event.stopPropagation();
-            cvSearchQuery = val.toLowerCase().trim();
+            const tab = tabs.find(t => t.id === activeTabId);
+            if(!tab) return;
+            tab.cvQuery = val;
+            tab.currentPage = 1;
+            cvSearchQuery = val;
             document.getElementById('list-cv').classList.add('show');
-            currentPage = 1;
-            updateFilters(true); 
-            handleSearch(); 
+            updateFilters(true);
+            refreshAll();
         }
 
         function updateFilters(onlyCV = false) {
+            const tab = tabs.find(t => t.id === activeTabId);
+            if(!tab) return;
             const getUT = (p) => { let t=[]; operatorData.forEach(d=>{ const v=d[p]; if(v) { if(Array.isArray(v)) t.push(...v); else t.push(...String(v).split(',').map(s=>s.trim())); } }); return [...new Set(t)].filter(v => v && v !== '-').sort(); };
             
             filterKeys.forEach(k => {
                 if (onlyCV && k !== 'cv') return;
-
                 let opts = [];
                 const skillKeys = { sSpType: 'spType', sTrigger: 'trigger', sTag: 'tag' };
 
-                if (k === 'star') { opts = [...MASTER_ORDER_STAR]; } 
-                else if (k === 'rank') { opts = [...MASTER_ORDER_RANK]; } 
-                else if (k === 'jobGroup') { opts = [...MASTER_ORDER_JOBGROUP]; } 
+                if (k === 'star') opts = [...MASTER_ORDER_STAR];
+                else if (k === 'rank') opts = [...MASTER_ORDER_RANK];
+                else if (k === 'jobGroup') opts = [...MASTER_ORDER_JOBGROUP];
                 else if (k === 'job') { 
-                    opts = (selections.jobGroup.length > 0) ? [...new Set(operatorData.filter(d => selections.jobGroup.includes(d.jobGroup)).map(d => d.job))] : [...new Set(operatorData.map(d => d.job))]; 
+                    opts = (tab.selections.jobGroup.length > 0) ? [...new Set(operatorData.filter(d => tab.selections.jobGroup.includes(d.jobGroup)).map(d => d.job))] : [...new Set(operatorData.map(d => d.job))]; 
                     opts = opts.filter(v => v && v !== '-').sort();
                 } else if (k === 'cost') {
                     opts = [...new Set(operatorData.map(d => String(d[k] || '-')))].filter(v => v && v !== '-');
                     opts.sort((a, b) => { const nA = parseFloat(a), nB = parseFloat(b); if (!isNaN(nA) && !isNaN(nB)) return nA - nB; return a.localeCompare(b, 'ja'); });
                 } else if (k === 'cv') {
                     opts = [...new Set(operatorData.map(d => d.cv))].filter(v => v && v !== '-').sort();
-                    if (cvSearchQuery) {
-                        opts = opts.filter(o => o.toLowerCase().includes(cvSearchQuery));
-                    }
+                    if (tab.cvQuery) opts = opts.filter(o => o.toLowerCase().includes(tab.cvQuery.toLowerCase()));
                 } else if (skillKeys[k]) { 
                     const subKey = skillKeys[k];
                     if (k === 'sTag') {
-                        let tags = [];
-                        operatorData.forEach(d => {
-                            (d.skills || []).forEach(s => {
-                                if (s && s.tag) {
-                                    const split = String(s.tag).split(',').map(t => t.trim());
-                                    tags.push(...split);
-                                }
-                            });
-                        });
+                        let tags = []; operatorData.forEach(d => { (d.skills || []).forEach(s => { if (s && s.tag) tags.push(...String(s.tag).split(',').map(t => t.trim())); }); });
                         opts = [...new Set(tags)].filter(v => v && v !== '-').sort();
                     } else {
                         opts = [...new Set(operatorData.flatMap(d => (d.skills||[]).map(s => s[subKey])))].filter(v => v && v !== '-').sort(); 
                     }
-                } else if (['obtain', 'recruitTags'].includes(k)) { 
-                    opts = getUT(k); 
-                } else { 
-                    opts = [...new Set(operatorData.map(d => String(d[k] || '-')))].filter(v => v && v !== '-').sort(); 
-                }
+                } else if (['obtain', 'recruitTags'].includes(k)) opts = getUT(k); 
+                else opts = [...new Set(operatorData.map(d => String(d[k] || '-')))].filter(v => v && v !== '-').sort(); 
 
                 const list = document.getElementById(`list-${k}`); 
                 if(list) {
                     list.innerHTML = "";
                     opts.forEach(o => {
-                        const isSelected = selections[k].includes(o) ? 'selected' : '';
+                        const isSelected = tab.selections[k].includes(o) ? 'selected' : '';
                         const itemDiv = document.createElement('div');
                         itemDiv.className = `dropdown-item ${isSelected}`;
-                        itemDiv.setAttribute('data-key', k);
-                        itemDiv.setAttribute('data-value', o);
-                        
-                        itemDiv.addEventListener('click', function(e) {
-                            e.stopPropagation();
-                            const targetKey = this.getAttribute('data-key');
-                            const targetVal = this.getAttribute('data-value');
-                            addOrToggleSelection(targetKey, targetVal);
-                        });
-
-                        if (k === 'range') {
-                            itemDiv.innerHTML = `<div class="range-monospace" style="font-size:13px; background:rgba(0,0,0,0.03); padding:4px; border-radius:4px;">${formatRangeText(o)}</div>`;
-                        } else {
-                            itemDiv.textContent = o;
-                        }
+                        itemDiv.onclick = (e) => { e.stopPropagation(); addOrToggleSelection(k, o); };
+                        if (k === 'range') itemDiv.innerHTML = `<div class="range-monospace" style="font-size:12px; background:rgba(0,0,0,0.03); padding:4px; border-radius:4px;">${formatRangeText(o)}</div>`;
+                        else itemDiv.textContent = o;
                         list.appendChild(itemDiv);
                     });
                 }
@@ -469,76 +628,60 @@
                 const chips = document.getElementById(`chips-${k}`); 
                 if(chips) {
                     chips.innerHTML = "";
-                    selections[k].forEach(v => {
+                    tab.selections[k].forEach(v => {
                         const chipDiv = document.createElement('div');
                         chipDiv.className = `chip ${k === 'range' ? 'chip-range' : ''}`;
-                        
                         const removeSpan = document.createElement('span');
-                        removeSpan.className = 'remove-chip';
-                        removeSpan.textContent = '×';
-                        removeSpan.setAttribute('data-key', k);
-                        removeSpan.setAttribute('data-value', v);
-                        removeSpan.addEventListener('click', function(e) {
-                            e.stopPropagation();
-                            const targetKey = this.getAttribute('data-key');
-                            const targetVal = this.getAttribute('data-value');
-                            addOrToggleSelection(targetKey, targetVal);
-                        });
-                        
+                        removeSpan.className = 'remove-chip'; removeSpan.textContent = '×';
+                        removeSpan.onclick = (e) => { e.stopPropagation(); addOrToggleSelection(k, v); };
                         chipDiv.appendChild(removeSpan);
-
                         if (k === 'range') {
-                            const rangeContainer = document.createElement('div');
-                            rangeContainer.className = 'range-monospace';
-                            rangeContainer.style.fontSize = '11px'; 
-                            rangeContainer.innerHTML = formatRangeText(v);
-                            chipDiv.appendChild(rangeContainer);
-                        } else {
-                            chipDiv.appendChild(document.createTextNode(v.replace(/\\n/g, ' ')));
-                        }
-                        
+                            const rc = document.createElement('div'); rc.className = 'range-monospace'; rc.style.fontSize = '10px';
+                            rc.innerHTML = formatRangeText(v); chipDiv.appendChild(rc);
+                        } else chipDiv.appendChild(document.createTextNode(v.replace(/\\n/g, ' ')));
                         chips.appendChild(chipDiv);
                     });
                 }
                 
                 if (k === 'cv') {
                     const cvIn = document.getElementById('cvInput');
-                    if(cvIn) cvIn.placeholder = selections[k].length ? '' : '選択または入力...';
+                    if(cvIn) cvIn.placeholder = tab.selections[k].length ? '' : 'サジェスト検索...';
                 } else {
                     const ph = document.getElementById(`ph-${k}`);
-                    if(ph) ph.style.display = selections[k].length ? 'none' : 'block';
+                    if(ph) ph.style.display = tab.selections[k].length ? 'none' : 'block';
                 }
             });
         }
 
         function addOrToggleSelection(key, val) {
-            const idx = selections[key].indexOf(val); 
-            if(idx === -1) selections[key].push(val); 
-            else selections[key].splice(idx, 1); 
-            
-            if (key === 'jobGroup') selections.job = []; 
+            const tab = tabs.find(t => t.id === activeTabId);
+            if(!tab) return;
+            const idx = tab.selections[key].indexOf(val); 
+            if(idx === -1) tab.selections[key].push(val); 
+            else tab.selections[key].splice(idx, 1); 
+            if (key === 'jobGroup') tab.selections.job = []; 
             if (key === 'cv') {
-                cvSearchQuery = "";
+                tab.cvQuery = "";
                 const cvIn = document.getElementById('cvInput');
                 if(cvIn) cvIn.value = "";
             }
-            currentPage = 1; 
-            updateFilters(); 
-            handleSearch(); 
+            tab.currentPage = 1;
+            refreshAll(); 
         }
 
         function clearSel(e, k){ 
             e.stopPropagation(); 
-            selections[k] = []; 
-            if(k === 'jobGroup') selections.job = []; 
+            const tab = tabs.find(t => t.id === activeTabId);
+            if(!tab) return;
+            tab.selections[k] = []; 
+            if(k === 'jobGroup') tab.selections.job = []; 
             if (k === 'cv') {
-                cvSearchQuery = "";
+                tab.cvQuery = "";
                 const cvIn = document.getElementById('cvInput');
                 if(cvIn) cvIn.value = "";
             }
-            currentPage = 1; 
-            updateFilters(); 
-            handleSearch(); 
+            tab.currentPage = 1;
+            refreshAll(); 
         }
 
         function toggleDrop(e, k){ 
@@ -552,19 +695,28 @@
         }
 
         function allClear(){ 
-            document.getElementById('keywordInput').value = ""; 
+            const tab = tabs.find(t => t.id === activeTabId);
+            if(!tab) return;
+            tab.keyword = ""; 
+            tab.cvQuery = "";
+            tab.currentPage = 1;
             const cvIn = document.getElementById('cvInput');
             if(cvIn) cvIn.value = "";
-            cvSearchQuery = "";
-            filterKeys.forEach(k => selections[k] = []); 
-            currentPage = 1; 
-            updateFilters(); 
-            handleSearch(); 
+            document.getElementById('keywordInput').value = "";
+            filterKeys.forEach(k => tab.selections[k] = []); 
+            refreshAll(); 
         }
 
         function hl(t, w){ if(!w) return t; const escaped = w.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'); return String(t).replace(new RegExp(`(${escaped})`,'gi'), '<span class="highlight">$1</span>'); }
         function createBadges(f, key){ const items = Array.isArray(f)?f:String(f||'').split(',').map(s=>s.trim()).filter(v => v && v !== '-'); if(!items.length) return ""; return `<div style="display:flex;flex-wrap:wrap;gap:4px;">${items.map(i=>`<span class="cell-badge" onclick="event.stopPropagation(); handleCellClick('${key}', '${i.replace(/'/g, "\\'")}')">${i}</span>`).join('')}</div>`; }
         
+        function requestSort(id, tabId) { 
+            const tab = tabs.find(t => t.id === tabId);
+            if (tab.currentSort.key === id) tab.currentSort.asc = !tab.currentSort.asc; 
+            else { tab.currentSort.key = id; tab.currentSort.asc = true; } 
+            refreshAll();
+        }
+
         function exportData() { 
             const b = new Blob([JSON.stringify(operatorData, null, 2)], {type: 'application/json'}); 
             const a = Object.assign(document.createElement('a'), {href: URL.createObjectURL(b), download: 'arknights_data.json'}); 
@@ -573,9 +725,8 @@
 
         function toggleDarkMode() { const isDark = document.documentElement.getAttribute('data-theme') === 'dark'; document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark'); localStorage.setItem('theme', isDark ? 'light' : 'dark'); }
         function openColumnModal() { const container = document.getElementById('columnListContainer'); container.innerHTML = colSettings.map(s => { const match = ALL_COLUMNS.find(c => c.id === s.id); if(!match) return ''; return `<div class="column-item" draggable="true" ondragstart="drag(event)" ondragover="allowDrop(event)" ondrop="drop(event)" data-id="${s.id}">☰ <input type="checkbox" id="chk-${s.id}" ${s.visible ? 'checked' : ''}> <label for="chk-${s.id}">${match.label}</label></div>`; }).join(''); document.getElementById('columnModal').style.display = 'block'; }
-        function saveColumnSettings() { colSettings = Array.from(document.querySelectorAll('.column-item')).map(item => ({ id: item.dataset.id, visible: item.querySelector('input').checked })); localStorage.setItem('column_settings_v40', JSON.stringify(colSettings)); handleSearch(); closeModal('columnModal'); }
+        function saveColumnSettings() { colSettings = Array.from(document.querySelectorAll('.column-item')).map(item => ({ id: item.dataset.id, visible: item.querySelector('input').checked })); localStorage.setItem('column_settings_v40', JSON.stringify(colSettings)); refreshAll(); closeModal('columnModal'); }
         let draggedItem = null; function drag(e) { draggedItem = e.currentTarget; } function allowDrop(e) { e.preventDefault(); } function drop(e) { e.preventDefault(); const list = document.getElementById('columnListContainer'); const items = [...list.querySelectorAll('.column-item')]; const curIdx = items.indexOf(e.currentTarget), dragIdx = items.indexOf(draggedItem); if (curIdx > dragIdx) list.insertBefore(draggedItem, e.currentTarget.nextSibling); else list.insertBefore(draggedItem, e.currentTarget); }
-        function requestSort(id) { if (currentSort.key === id) currentSort.asc = !currentSort.asc; else { currentSort.key = id; currentSort.asc = true; } handleSearch(); }
         function openManual() { window.open('アークナイツオペレーターデータベースマニュアル.html', '_blank'); }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         
