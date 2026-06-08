@@ -15,16 +15,16 @@
         .search-container { background: var(--bg-card); backdrop-filter: blur(12px); padding: 20px; border-radius: 14px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1); border: 1px solid var(--border-color); margin-bottom: 12px; position: relative; z-index: 101; }
         .search-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
         .search-item { display: flex; flex-direction: column; gap: 5px; position: relative; z-index: 1; }
-        /* ドロップダウンが開いている項目の重なり順を最前面にする */
         .search-item:has(.show) { z-index: 1000; }
         .search-item label { font-size: 0.78em; font-weight: 700; color: var(--text-sub); }
-        .chip-container { min-height: 36px; padding: 3px 32px 3px 8px; border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; background: var(--bg-input); cursor: pointer; position: relative; }
+        .chip-container { min-height: 36px; padding: 3px 32px 3px 8px; border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; background: var(--bg-input); cursor: pointer; position: relative; box-sizing: border-box; }
         .chip { background-color: #5c768d; color: white; padding: 3px 8px; border-radius: 6px; display: flex; align-items: center; font-size: 0.9em; }
-        .chip .remove-chip { cursor: pointer; margin-right: 6px; border-right: 1px solid rgba(255,255,255,0.3); padding-right: 6px; }
+        .chip.chip-range { display: inline-flex; align-items: center; padding: 4px 8px; }
+        .chip .remove-chip { cursor: pointer; margin-right: 6px; border-right: 1px solid rgba(255,255,255,0.3); padding-right: 6px; flex-shrink: 0; }
         .placeholder { color: #90a4ae; font-size: 0.85em; }
         .input-wrapper { position: relative; display: flex; align-items: center; width: 100%; }
         .input-wrapper input { width: 100%; padding: 8px 32px 8px 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.9em; box-sizing: border-box; background: var(--bg-input); color: var(--text-main); }
-        .main-clear-btn { position: absolute; right: 10px; cursor: pointer; font-weight: bold; color: #b0bec5; }
+        .main-clear-btn { position: absolute; right: 10px; cursor: pointer; font-weight: bold; color: #b0bec5; z-index: 10; }
         .search-footer { display: flex; justify-content: flex-end; align-items: center; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
         .search-count { font-size: 0.95em; font-weight: 700; color: var(--text-main); background: rgba(74, 101, 114, 0.1); padding: 4px 12px; border-radius: 6px; }
         .page-size-selector { font-size: 0.9em; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
@@ -49,13 +49,17 @@
         .highlight { background-color: #fff59d; color: #2c3e50; font-weight: 600; }
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); }
         .modal-content { background: var(--modal-bg); margin: 5% auto; padding: 24px; width: 90%; max-height: 85%; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); display: flex; flex-direction: column; overflow: hidden; color: var(--text-main); }
-        .dropdown-list { display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--bg-table); border-radius: 8px; z-index: 2000; max-height: 220px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border-color); }
+        .dropdown-list { display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--bg-table); border-radius: 8px; z-index: 2000; max-height: 280px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border-color); }
         .dropdown-item { padding: 9px 12px; cursor: pointer; border-bottom: 1px solid var(--border-color); font-size: 0.9em; }
         .dropdown-item.selected { background-color: #4a6572; color: white; font-weight: 600; }
         .show { display: block; }
+        
+        .range-monospace { font-family: monospace; font-size: 14px; letter-spacing: 0px; line-height: 1.1; white-space: pre-wrap; pointer-events: none; display: inline-block; text-align: left; }
+        .range-invisible-space { opacity: 0 !important; visibility: hidden; }
+        .table-container .range-monospace { pointer-events: auto; }
+        .cv-input-style { width: 100%; border: none; background: transparent; font-size: 0.9em; color: var(--text-main); outline: none; padding: 4px 0; min-width: 60px; flex-grow: 1; }
     </style>
     <script>
-        // data.js をキャッシュさせずに読み込む
         document.write('<script src="data.js?v=' + new Date().getTime() + '"><\/script>');
     </script>
 </head>
@@ -113,15 +117,20 @@
         let currentSort = { key: null, asc: true };
         let pageSize = "50";
         let currentPage = 1; 
+        let cvSearchQuery = ""; 
         
+        /* 【修正】ALL_COLUMNS 内の「初期」➔「初期SP」、「必要」➔「必要SP」へ変更 */
         const ALL_COLUMNS = [
             { id: 'op', label: 'オペレーター', width: '130px', sortable: true },
             { id: 'star', label: '★', width: '70px', sortable: true },
             { id: 'rank', label: 'ランク', width: '70px', sortable: true },
+            { id: 'cv', label: 'CV', width: '120px', sortable: true },
             { id: 'jobGroup', label: '職業', width: '90px', sortable: true },
             { id: 'job', label: '職分', width: '110px', sortable: true }, 
+            { id: 'range', label: '攻撃範囲', width: '100px', sortable: true },
+            { id: 'atkType', label: '攻撃区分', width: '90px', sortable: true },
             { id: 'cost', label: 'コスト', width: '60px', sortable: true },
-            { id: 'block', label: 'ブロック', width: '60px', sortable: true },
+            { id: 'block', label: 'ブロック数', width: '90px', sortable: true }, 
             { id: 'hp', label: 'HP', width: '80px', sortable: true },
             { id: 'atk', label: '攻撃力', width: '80px', sortable: true },
             { id: 'def', label: '防御力', width: '80px', sortable: true },
@@ -131,17 +140,17 @@
             { id: 'obtain', label: '入手方法', width: '180px' }, 
             { id: 'recruitTags', label: '募集タグ', width: '220px' }, 
             { id: 'sName', label: 'スキル名', width: '140px' },
-            { id: 'sSpType', label: 'SP型', width: '90px' },
-            { id: 'sTrigger', label: '発動', width: '90px' },
-            { id: 'sInit', label: '初期', width: '50px' },
-            { id: 'sReq', label: '必要', width: '50px' },
+            { id: 'sSpType', label: 'SPタイプ', width: '95px' }, 
+            { id: 'sTrigger', label: '発動タイプ', width: '95px' }, 
+            { id: 'sInit', label: '初期SP', width: '65px' }, 
+            { id: 'sReq', label: '必要SP', width: '65px' }, 
             { id: 'sDur', label: '持続', width: '50px' },
             { id: 'sEffect', label: '効果詳細', width: '600px' },
-            { id: 'sTag', label: 'タグ', width: '110px' } 
+            { id: 'sTag', label: 'スキルタグ', width: '110px' } 
         ];
 
         let colSettings = ALL_COLUMNS.map(c => ({ id: c.id, visible: true }));
-        const filterKeys = ['star', 'rank', 'jobGroup', 'job', 'cost', 'block', 'reDeploy', 'atkSpeed', 'obtain', 'recruitTags', 'sSpType', 'sTrigger', 'sTag'];
+        const filterKeys = ['star', 'rank', 'cv', 'jobGroup', 'job', 'range', 'atkType', 'cost', 'block', 'reDeploy', 'atkSpeed', 'obtain', 'recruitTags', 'sSpType', 'sTrigger', 'sTag'];
         const selections = {}; filterKeys.forEach(k => selections[k] = []);
 
         function init() {
@@ -150,6 +159,13 @@
             if(localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
             const savedCols = localStorage.getItem('column_settings_v40');
             if(savedCols) colSettings = JSON.parse(savedCols);
+            
+            ALL_COLUMNS.forEach(col => {
+                if(!colSettings.some(s => s.id === col.id)) {
+                    colSettings.push({ id: col.id, visible: true });
+                }
+            });
+
             const savedPageSize = localStorage.getItem('pageSizeSetting_v74');
             if(savedPageSize) pageSize = savedPageSize;
 
@@ -210,6 +226,17 @@
             operatorData.forEach((char, originalIdx) => {
                 let isFilterMatch = true;
                 for(let k of filterKeys) {
+                    if (k === 'cv') {
+                        const targetCV = String(char.cv ?? '').toLowerCase();
+                        if (selections.cv.length) {
+                            if (!selections.cv.some(s => targetCV === s.toLowerCase())) { isFilterMatch = false; break; }
+                        }
+                        if (cvSearchQuery) {
+                            if (!targetCV.includes(cvSearchQuery)) { isFilterMatch = false; break; }
+                        }
+                        continue;
+                    }
+
                     if(selections[k] && selections[k].length && !['sTag', 'sSpType', 'sTrigger'].includes(k)) {
                         const val = char[k];
                         if(['obtain', 'recruitTags'].includes(k)) {
@@ -223,20 +250,28 @@
                 if (!isFilterMatch) return;
 
                 const nameMatched = kw && (char.name || "").toLowerCase().includes(kw);
+                const cvMatched = kw && (char.cv || "").toLowerCase().includes(kw);
+                const rangeMatched = kw && (char.range || "").toLowerCase().includes(kw);
+
                 const filteredSkills = (char.skills || []).filter(s => {
                     if(!s) return false;
                     if(selections.sSpType.length && !selections.sSpType.includes(String(s.spType ?? '-'))) return false;
                     if(selections.sTrigger.length && !selections.sTrigger.includes(String(s.trigger ?? '-'))) return false;
-                    if(selections.sTag.length && !selections.sTag.includes(String(s.tag ?? '-'))) return false;
+                    
+                    if(selections.sTag.length) {
+                        const sTags = Array.isArray(s.tag) ? s.tag : String(s.tag ?? '-').split(',').map(t=>t.trim());
+                        if(!selections.sTag.some(t => sTags.includes(t))) return false;
+                    }
+                    
                     if(kw) {
-                        if(nameMatched) return true;
+                        if(nameMatched || cvMatched || rangeMatched) return true;
                         return (s.name || "").toLowerCase().includes(kw) || (s.effect || "").toLowerCase().includes(kw);
                     }
                     return true;
                 });
 
                 const hasSkillFilter = selections.sSpType.length || selections.sTrigger.length || selections.sTag.length;
-                if ((kw || hasSkillFilter) && !nameMatched && filteredSkills.length === 0) return;
+                if ((kw || hasSkillFilter) && !nameMatched && !cvMatched && !rangeMatched && filteredSkills.length === 0) return;
                 const displaySkills = (kw || hasSkillFilter) ? (filteredSkills.length > 0 ? filteredSkills : (char.skills || [null])) : (char.skills || [null]);
 
                 filtered.push({ ...char, _originalIdx: originalIdx, _displaySkills: displaySkills });
@@ -266,9 +301,15 @@
             renderTable(displayData);
         }
 
+        function formatRangeText(text) {
+            if (!text) return '-';
+            let formatted = text.replace(/\\n/g, '\n');
+            return formatted.replace(/ /g, '<span class="range-invisible-space">□</span>');
+        }
+
         function renderTable(data) {
             const kw = document.getElementById('keywordInput')?.value.toLowerCase() || "";
-            const cols = colSettings.filter(s => s.visible).map(s => ALL_COLUMNS.find(c => c.id === s.id));
+            const cols = colSettings.filter(s => s.visible).map(s => ALL_COLUMNS.find(c => c.id === s.id)).filter(Boolean);
             
             document.getElementById("tableHead").innerHTML = `<tr>${cols.map(c => {
                 const icon = c.sortable ? (currentSort.key === c.id ? (currentSort.asc ? ' ▲' : ' ▼') : ' <span style="opacity:0.3">⇅</span>') : '';
@@ -293,11 +334,22 @@
                         let clickableCls = (isSearchable) ? 'clickable-cell' : '';
                         let clickAttr = "";
 
-                        if (col.id === 'op') { display = `<strong>${hl(rawVal,kw)}</strong>`; }
-                        else if (['obtain','recruitTags','sTag'].includes(col.id)) { display = createBadges(rawVal, col.id); clickableCls = ""; }
-                        else { display = hl(rawVal,kw); }
+                        if (typeof rawVal === 'string' && col.id !== 'range') {
+                            rawVal = rawVal.replace(/\\n/g, '\n');
+                        }
+
+                        if (col.id === 'op') { 
+                            display = `<strong>${hl(rawVal,kw)}</strong>`; 
+                        } else if (['obtain','recruitTags','sTag'].includes(col.id)) { 
+                            display = createBadges(rawVal, col.id); 
+                            clickableCls = ""; 
+                        } else if (col.id === 'range') {
+                            display = `<div class="range-monospace">${formatRangeText(hl(rawVal,kw))}</div>`;
+                        } else { 
+                            display = hl(rawVal,kw); 
+                        }
                         
-                        if (clickableCls) { clickAttr = `onclick="handleCellClick('${col.id}', '${String(rawVal).replace(/'/g, "\\'")}')"`; }
+                        if (clickableCls) { clickAttr = `onclick="handleCellClick('${col.id}', '${String(rawVal).replace(/\n/g, "\\n").replace(/'/g, "\\'")}')"`; }
                         const stickyCls = (col.id === 'op') ? 'sticky-col' : '';
                         row += `<td ${isMain ? `rowspan="${visibleSkills.length}"` : ''} class="${clickableCls} ${stickyCls}" ${clickAttr}>${display}</td>`;
                     });
@@ -309,29 +361,47 @@
 
         function handleCellClick(key, val) {
             if(val === '-' || !val) return;
-            const v = val.trim();
-            const idx = selections[key].indexOf(v);
-            if(idx === -1) selections[key].push(v);
-            else selections[key].splice(idx, 1);
-            if (key === 'jobGroup') selections.job = []; 
-            currentPage = 1; 
-            updateFilters(); 
-            handleSearch();
+            const v = val.replace(/\\n/g, '\n').trim();
+            addOrToggleSelection(key, v);
         }
 
         function renderSearchGrid() {
-            const grid = document.getElementById('searchGrid'), labels = { star:'★', rank:'ランク', jobGroup:'職業', job:'職分', cost:'コスト', block:'ブロック', reDeploy:'再配置', atkSpeed:'攻撃速度', obtain:'入手方法', recruitTags:'募集タグ', sSpType:'SP型', sTrigger:'発動', sTag:'タグ' };
+            const grid = document.getElementById('searchGrid');
+            const labels = { 
+                star:'★', rank:'ランク', cv:'CV', jobGroup:'職業', job:'職分', range:'攻撃範囲', 
+                atkType:'攻撃区分', cost:'コスト', block:'ブロック数', reDeploy:'再配置', 
+                atkSpeed:'攻撃速度', obtain:'入手方法', recruitTags:'募集タグ', 
+                sSpType:'SPタイプ', sTrigger:'発動タイプ', sTag:'スキルタグ' 
+            };
+            
             grid.innerHTML = `<div class="search-item"><label>キーワード</label><div class="input-wrapper"><input type="text" id="keywordInput" oninput="currentPage=1; handleSearch()" placeholder="名前/スキル/効果..."><span class="main-clear-btn" onclick="document.getElementById('keywordInput').value='';currentPage=1;handleSearch()">×</span></div></div>`;
-            filterKeys.forEach(k => { grid.innerHTML += `<div class="search-item"><label>${labels[k]}</label><div class="chip-container" onclick="toggleDrop(event,'${k}')"><div id="chips-${k}"></div><span class="placeholder" id="ph-${k}">選択なし</span><span class="main-clear-btn" onclick="clearSel(event,'${k}')">×</span></div><div class="dropdown-list" id="list-${k}"></div></div>`; });
+            
+            filterKeys.forEach(k => {
+                if (k === 'cv') {
+                    grid.innerHTML += `<div class="search-item"><label>${labels[k]}</label><div class="chip-container" onclick="toggleDrop(event,'${k}')"><div id="chips-${k}"></div><input type="text" id="cvInput" class="cv-input-style" placeholder="選択または入力..." oninput="filterCVOptions(this.value, event)" onclick="toggleDrop(event,'${k}')"><span class="main-clear-btn" onclick="clearSel(event,'${k}')">×</span></div><div class="dropdown-list" id="list-${k}"></div></div>`;
+                } else {
+                    grid.innerHTML += `<div class="search-item"><label>${labels[k]}</label><div class="chip-container" onclick="toggleDrop(event,'${k}')"><div id="chips-${k}"></div><span class="placeholder" id="ph-${k}">選択なし</span><span class="main-clear-btn" onclick="clearSel(event,'${k}')">×</span></div><div class="dropdown-list" id="list-${k}"></div></div>`;
+                }
+            });
             updateFilters();
         }
         
-        function updateFilters() {
+        function filterCVOptions(val, event) {
+            event.stopPropagation();
+            cvSearchQuery = val.toLowerCase().trim();
+            document.getElementById('list-cv').classList.add('show');
+            currentPage = 1;
+            updateFilters(true); 
+            handleSearch(); 
+        }
+
+        function updateFilters(onlyCV = false) {
             const getUT = (p) => { let t=[]; operatorData.forEach(d=>{ const v=d[p]; if(v) { if(Array.isArray(v)) t.push(...v); else t.push(...String(v).split(',').map(s=>s.trim())); } }); return [...new Set(t)].filter(v => v && v !== '-').sort(); };
             
             filterKeys.forEach(k => {
+                if (onlyCV && k !== 'cv') return;
+
                 let opts = [];
-                // スキル内のデータを参照する必要があるキーの判定
                 const skillKeys = { sSpType: 'spType', sTrigger: 'trigger', sTag: 'tag' };
 
                 if (k === 'star') { opts = [...MASTER_ORDER_STAR]; } 
@@ -343,27 +413,156 @@
                 } else if (k === 'cost') {
                     opts = [...new Set(operatorData.map(d => String(d[k] || '-')))].filter(v => v && v !== '-');
                     opts.sort((a, b) => { const nA = parseFloat(a), nB = parseFloat(b); if (!isNaN(nA) && !isNaN(nB)) return nA - nB; return a.localeCompare(b, 'ja'); });
+                } else if (k === 'cv') {
+                    opts = [...new Set(operatorData.map(d => d.cv))].filter(v => v && v !== '-').sort();
+                    if (cvSearchQuery) {
+                        opts = opts.filter(o => o.toLowerCase().includes(cvSearchQuery));
+                    }
                 } else if (skillKeys[k]) { 
-                    // スキル配列の中からユニークな値を抽出するように修正
                     const subKey = skillKeys[k];
-                    opts = [...new Set(operatorData.flatMap(d => (d.skills||[]).map(s => s[subKey])))].filter(v => v && v !== '-').sort(); 
+                    if (k === 'sTag') {
+                        let tags = [];
+                        operatorData.forEach(d => {
+                            (d.skills || []).forEach(s => {
+                                if (s && s.tag) {
+                                    const split = String(s.tag).split(',').map(t => t.trim());
+                                    tags.push(...split);
+                                }
+                            });
+                        });
+                        opts = [...new Set(tags)].filter(v => v && v !== '-').sort();
+                    } else {
+                        opts = [...new Set(operatorData.flatMap(d => (d.skills||[]).map(s => s[subKey])))].filter(v => v && v !== '-').sort(); 
+                    }
                 } else if (['obtain', 'recruitTags'].includes(k)) { 
                     opts = getUT(k); 
                 } else { 
                     opts = [...new Set(operatorData.map(d => String(d[k] || '-')))].filter(v => v && v !== '-').sort(); 
                 }
 
-                const list = document.getElementById(`list-${k}`); if(list) list.innerHTML = opts.map(o => `<div class="dropdown-item ${selections[k].includes(o)?'selected':''}" onclick="sel(event,'${k}','${o}')">${o}</div>`).join('');
-                const chips = document.getElementById(`chips-${k}`); if(chips) chips.innerHTML = selections[k].map(v => `<div class="chip"><span class="remove-chip" onclick="sel(event,'${k}','${v}')">×</span>${v}</div>`).join('');
-                document.getElementById(`ph-${k}`).style.display = selections[k].length ? 'none' : 'block';
+                const list = document.getElementById(`list-${k}`); 
+                if(list) {
+                    list.innerHTML = "";
+                    opts.forEach(o => {
+                        const isSelected = selections[k].includes(o) ? 'selected' : '';
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = `dropdown-item ${isSelected}`;
+                        itemDiv.setAttribute('data-key', k);
+                        itemDiv.setAttribute('data-value', o);
+                        
+                        itemDiv.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            const targetKey = this.getAttribute('data-key');
+                            const targetVal = this.getAttribute('data-value');
+                            addOrToggleSelection(targetKey, targetVal);
+                        });
+
+                        if (k === 'range') {
+                            itemDiv.innerHTML = `<div class="range-monospace" style="font-size:13px; background:rgba(0,0,0,0.03); padding:4px; border-radius:4px;">${formatRangeText(o)}</div>`;
+                        } else {
+                            itemDiv.textContent = o;
+                        }
+                        list.appendChild(itemDiv);
+                    });
+                }
+
+                const chips = document.getElementById(`chips-${k}`); 
+                if(chips) {
+                    chips.innerHTML = "";
+                    selections[k].forEach(v => {
+                        const chipDiv = document.createElement('div');
+                        chipDiv.className = `chip ${k === 'range' ? 'chip-range' : ''}`;
+                        
+                        const removeSpan = document.createElement('span');
+                        removeSpan.className = 'remove-chip';
+                        removeSpan.textContent = '×';
+                        removeSpan.setAttribute('data-key', k);
+                        removeSpan.setAttribute('data-value', v);
+                        removeSpan.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            const targetKey = this.getAttribute('data-key');
+                            const targetVal = this.getAttribute('data-value');
+                            addOrToggleSelection(targetKey, targetVal);
+                        });
+                        
+                        chipDiv.appendChild(removeSpan);
+
+                        if (k === 'range') {
+                            const rangeContainer = document.createElement('div');
+                            rangeContainer.className = 'range-monospace';
+                            rangeContainer.style.fontSize = '11px'; 
+                            rangeContainer.innerHTML = formatRangeText(v);
+                            chipDiv.appendChild(rangeContainer);
+                        } else {
+                            chipDiv.appendChild(document.createTextNode(v.replace(/\\n/g, ' ')));
+                        }
+                        
+                        chips.appendChild(chipDiv);
+                    });
+                }
+                
+                if (k === 'cv') {
+                    const cvIn = document.getElementById('cvInput');
+                    if(cvIn) cvIn.placeholder = selections[k].length ? '' : '選択または入力...';
+                } else {
+                    const ph = document.getElementById(`ph-${k}`);
+                    if(ph) ph.style.display = selections[k].length ? 'none' : 'block';
+                }
             });
         }
 
-        function sel(e,k,v){ e.stopPropagation(); const i=selections[k].indexOf(v); if(i===-1) selections[k].push(v); else selections[k].splice(i,1); if (k === 'jobGroup') selections.job = []; currentPage = 1; updateFilters(); handleSearch(); }
-        function clearSel(e,k){ e.stopPropagation(); selections[k]=[]; if(k==='jobGroup') selections.job=[]; currentPage = 1; updateFilters(); handleSearch(); }
-        function toggleDrop(e,k){ e.stopPropagation(); const el=document.getElementById(`list-${k}`), s=el.classList.contains('show'); document.querySelectorAll('.dropdown-list').forEach(l=>l.classList.remove('show')); if(!s) el.classList.add('show'); }
-        function allClear(){ document.getElementById('keywordInput').value=""; filterKeys.forEach(k=>selections[k]=[]); currentPage = 1; updateFilters(); handleSearch(); }
-        function hl(t,w){ if(!w) return t; const escaped = w.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'); return String(t).replace(new RegExp(`(${escaped})`,'gi'), '<span class="highlight">$1</span>'); }
+        function addOrToggleSelection(key, val) {
+            const idx = selections[key].indexOf(val); 
+            if(idx === -1) selections[key].push(val); 
+            else selections[key].splice(idx, 1); 
+            
+            if (key === 'jobGroup') selections.job = []; 
+            if (key === 'cv') {
+                cvSearchQuery = "";
+                const cvIn = document.getElementById('cvInput');
+                if(cvIn) cvIn.value = "";
+            }
+            currentPage = 1; 
+            updateFilters(); 
+            handleSearch(); 
+        }
+
+        function clearSel(e, k){ 
+            e.stopPropagation(); 
+            selections[k] = []; 
+            if(k === 'jobGroup') selections.job = []; 
+            if (k === 'cv') {
+                cvSearchQuery = "";
+                const cvIn = document.getElementById('cvInput');
+                if(cvIn) cvIn.value = "";
+            }
+            currentPage = 1; 
+            updateFilters(); 
+            handleSearch(); 
+        }
+
+        function toggleDrop(e, k){ 
+            e.stopPropagation(); 
+            const el = document.getElementById(`list-${k}`), s = el.classList.contains('show'); 
+            document.querySelectorAll('.dropdown-list').forEach(l => l.classList.remove('show')); 
+            if(!s) {
+                el.classList.add('show');
+                if (k === 'cv') document.getElementById('cvInput').focus();
+            }
+        }
+
+        function allClear(){ 
+            document.getElementById('keywordInput').value = ""; 
+            const cvIn = document.getElementById('cvInput');
+            if(cvIn) cvIn.value = "";
+            cvSearchQuery = "";
+            filterKeys.forEach(k => selections[k] = []); 
+            currentPage = 1; 
+            updateFilters(); 
+            handleSearch(); 
+        }
+
+        function hl(t, w){ if(!w) return t; const escaped = w.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'); return String(t).replace(new RegExp(`(${escaped})`,'gi'), '<span class="highlight">$1</span>'); }
         function createBadges(f, key){ const items = Array.isArray(f)?f:String(f||'').split(',').map(s=>s.trim()).filter(v => v && v !== '-'); if(!items.length) return ""; return `<div style="display:flex;flex-wrap:wrap;gap:4px;">${items.map(i=>`<span class="cell-badge" onclick="event.stopPropagation(); handleCellClick('${key}', '${i.replace(/'/g, "\\'")}')">${i}</span>`).join('')}</div>`; }
         
         function exportData() { 
@@ -373,7 +572,7 @@
         }
 
         function toggleDarkMode() { const isDark = document.documentElement.getAttribute('data-theme') === 'dark'; document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark'); localStorage.setItem('theme', isDark ? 'light' : 'dark'); }
-        function openColumnModal() { const container = document.getElementById('columnListContainer'); container.innerHTML = colSettings.map(s => `<div class="column-item" draggable="true" ondragstart="drag(event)" ondragover="allowDrop(event)" ondrop="drop(event)" data-id="${s.id}">☰ <input type="checkbox" id="chk-${s.id}" ${s.visible ? 'checked' : ''}> <label for="chk-${s.id}">${ALL_COLUMNS.find(c => c.id === s.id).label}</label></div>`).join(''); document.getElementById('columnModal').style.display = 'block'; }
+        function openColumnModal() { const container = document.getElementById('columnListContainer'); container.innerHTML = colSettings.map(s => { const match = ALL_COLUMNS.find(c => c.id === s.id); if(!match) return ''; return `<div class="column-item" draggable="true" ondragstart="drag(event)" ondragover="allowDrop(event)" ondrop="drop(event)" data-id="${s.id}">☰ <input type="checkbox" id="chk-${s.id}" ${s.visible ? 'checked' : ''}> <label for="chk-${s.id}">${match.label}</label></div>`; }).join(''); document.getElementById('columnModal').style.display = 'block'; }
         function saveColumnSettings() { colSettings = Array.from(document.querySelectorAll('.column-item')).map(item => ({ id: item.dataset.id, visible: item.querySelector('input').checked })); localStorage.setItem('column_settings_v40', JSON.stringify(colSettings)); handleSearch(); closeModal('columnModal'); }
         let draggedItem = null; function drag(e) { draggedItem = e.currentTarget; } function allowDrop(e) { e.preventDefault(); } function drop(e) { e.preventDefault(); const list = document.getElementById('columnListContainer'); const items = [...list.querySelectorAll('.column-item')]; const curIdx = items.indexOf(e.currentTarget), dragIdx = items.indexOf(draggedItem); if (curIdx > dragIdx) list.insertBefore(draggedItem, e.currentTarget.nextSibling); else list.insertBefore(draggedItem, e.currentTarget); }
         function requestSort(id) { if (currentSort.key === id) currentSort.asc = !currentSort.asc; else { currentSort.key = id; currentSort.asc = true; } handleSearch(); }
