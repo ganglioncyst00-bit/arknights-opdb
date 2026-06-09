@@ -176,7 +176,7 @@
         const MASTER_ORDER_RANK = ['SS', 'S', 'A', 'B', 'C', 'D', 'なし'];
         const MASTER_ORDER_JOBGROUP = ['先鋒', '狙撃', '前衛', '術師', '重装', '医療', '特殊', '補助'];
 
-        // 🌟 ALL_COLUMNS から 'atkType' を削除
+        // ALL_COLUMNS の スキル名(sName) と SPタイプ(sSpType) の間に 特化優先度(sPriority) を追加
         const ALL_COLUMNS = [
             { id: 'op', label: 'オペレーター', width: '130px', sortable: true },
             { id: 'star', label: '★', width: '70px', sortable: true },
@@ -196,6 +196,7 @@
             { id: 'obtain', label: '入手方法', width: '180px' }, 
             { id: 'recruitTags', label: '募集タグ', width: '220px' }, 
             { id: 'sName', label: 'スキル名', width: '140px' },
+            { id: 'sPriority', label: '特化優先度', width: '95px' }, // 新規追加
             { id: 'sSpType', label: 'SPタイプ', width: '95px' }, 
             { id: 'sTrigger', label: '発動タイプ', width: '95px' }, 
             { id: 'sInit', label: '初期SP', width: '65px' }, 
@@ -205,8 +206,8 @@
             { id: 'sTag', label: 'スキルタグ', width: '110px' } 
         ];
 
-        // 🌟 filterKeys から 'atkType' を削除
-        const filterKeys = ['star', 'rank', 'cv', 'jobGroup', 'job', 'range', 'cost', 'block', 'reDeploy', 'atkSpeed', 'obtain', 'recruitTags', 'sSpType', 'sTrigger', 'sTag'];
+        // 検索フィルター項目に sPriority を追加（sSpType の直前）
+        const filterKeys = ['star', 'rank', 'cv', 'jobGroup', 'job', 'range', 'cost', 'block', 'reDeploy', 'atkSpeed', 'obtain', 'recruitTags', 'sPriority', 'sSpType', 'sTrigger', 'sTag'];
 
         let operatorData = [];
         let tabs = []; 
@@ -234,8 +235,7 @@
             
             const savedCols = localStorage.getItem('column_settings_v40');
             if(savedCols) {
-                // 過去に保存された設定から 'atkType' を取り除く
-                let parsed = JSON.parse(savedCols).filter(c => c.id !== 'atkType');
+                let parsed = JSON.parse(savedCols);
                 colSettings = parsed;
             } else {
                 colSettings = ALL_COLUMNS.map(c => ({ id: c.id, visible: true }));
@@ -247,9 +247,9 @@
             
             if (savedTabs) {
                 tabs = JSON.parse(savedTabs);
-                // 既存タブ内の selections からも 'atkType' を除去
+                // 既存のタブデータに対する特化優先度の初期化対応
                 tabs.forEach(t => {
-                    if (t.selections && t.selections.atkType) delete t.selections.atkType;
+                    if (t.selections && !t.selections.sPriority) t.selections.sPriority = [];
                 });
                 currentLayoutMode = savedLayout || 'single';
                 leftTabId = localStorage.getItem('left_tab_id_v40');
@@ -456,7 +456,7 @@
                         if (tab.cvQuery && !targetCV.includes(tab.cvQuery.toLowerCase())) { isFilterMatch = false; break; }
                         continue;
                     }
-                    if(tab.selections[k] && tab.selections[k].length && !['sTag', 'sSpType', 'sTrigger'].includes(k)) {
+                    if(tab.selections[k] && tab.selections[k].length && !['sPriority', 'sSpType', 'sTrigger', 'sTag'].includes(k)) {
                         if(['obtain', 'recruitTags'].includes(k)) {
                             const rawVals = (Array.isArray(char[k]) ? char[k] : String(char[k] ?? '').split(',')).map(s => normalizeVal(s));
                             if(!tab.selections[k].some(s => rawVals.includes(normalizeVal(s)))) { isFilterMatch = false; break; }
@@ -473,11 +473,13 @@
 
                 const filteredSkills = (char.skills || []).filter(s => {
                     if(!s) return false;
+                    // 特化優先度のフィルタリングロジック
+                    if(tab.selections.sPriority.length && !tab.selections.sPriority.some(sel => normalizeVal(sel) === normalizeVal(s.priority))) return false;
                     if(tab.selections.sSpType.length && !tab.selections.sSpType.some(sel => normalizeVal(sel) === normalizeVal(s.spType))) return false;
                     if(tab.selections.sTrigger.length && !tab.selections.sTrigger.some(sel => normalizeVal(sel) === normalizeVal(s.trigger))) return false;
                     if(tab.selections.sTag.length) {
                         const sTags = (Array.isArray(s.tag) ? s.tag : String(s.tag ?? '').split(',').map(t => t.trim())).map(t => normalizeVal(t));
-                        if(!tab.selections.sTag.some(t => sTags.includes(normalizeVal(t)))) return false; // 🌟バグ修正: selections.sTag を参照
+                        if(!tab.selections.sTag.some(t => sTags.includes(normalizeVal(t)))) return false;
                     }
                     if(kw) {
                         if(nameMatched || cvMatched || rangeMatched) return true;
@@ -486,7 +488,7 @@
                     return true;
                 });
 
-                const hasSkillFilter = tab.selections.sSpType.length || tab.selections.sTrigger.length || tab.selections.sTag.length;
+                const hasSkillFilter = tab.selections.sPriority.length || tab.selections.sSpType.length || tab.selections.sTrigger.length || tab.selections.sTag.length;
                 if ((kw || hasSkillFilter) && !nameMatched && !cvMatched && !rangeMatched && filteredSkills.length === 0) return;
                 const displaySkills = (kw || hasSkillFilter) ? (filteredSkills.length > 0 ? filteredSkills : (char.skills || [null])) : (char.skills || [null]);
                 filtered.push({ ...char, _originalIdx: originalIdx, _displaySkills: displaySkills });
@@ -551,12 +553,12 @@
             let html = "";
             displayData.forEach(char => {
                 const visibleSkills = char._displaySkills || (char.skills || [null]);
-                const skillMap = { sName:'name', sSpType:'spType', sTrigger:'trigger', sInit:'initSp', sReq:'reqSp', sDur:'duration', sEffect:'effect', sTag:'tag' };
+                const skillMap = { sName:'name', sPriority:'priority', sSpType:'spType', sTrigger:'trigger', sInit:'initSp', sReq:'reqSp', sDur:'duration', sEffect:'effect', sTag:'tag' };
 
                 visibleSkills.forEach((s, i) => {
                     let row = '<tr>';
                     cols.forEach(col => {
-                        const isMain = !['sName','sSpType','sTrigger','sInit','sReq','sDur','sEffect','sTag'].includes(col.id);
+                        const isMain = !['sName','sPriority','sSpType','sTrigger','sInit','sReq','sDur','sEffect','sTag'].includes(col.id);
                         if (isMain && i > 0) return;
                         
                         let rawVal = isMain ? (col.id === 'op' ? char.name : (char[col.id] ?? '-')) : (s ? (s[skillMap[col.id]] ?? '-') : '-');
@@ -593,8 +595,7 @@
         function renderSearchGrid() {
             const grid = document.getElementById('searchGrid');
             if(!grid) return;
-            // 🌟 labels から 'atkType' を削除
-            const labels = { star:'★', rank:'ランク', cv:'CV', jobGroup:'職業', job:'職分', range:'攻撃範囲', cost:'コスト', block:'ブロック数', reDeploy:'再配置', atkSpeed:'攻撃速度', obtain:'入手方法', recruitTags:'募集タグ', sSpType:'SPタイプ', sTrigger:'発動タイプ', sTag:'スキルタグ' };
+            const labels = { star:'★', rank:'ランク', cv:'CV', jobGroup:'職業', job:'職分', range:'攻撃範囲', cost:'コスト', block:'ブロック数', reDeploy:'再配置', atkSpeed:'攻撃速度', obtain:'入手方法', recruitTags:'募集タグ', sPriority:'特化優先度', sSpType:'SPタイプ', sTrigger:'発動タイプ', sTag:'スキルタグ' };
             
             grid.innerHTML = `<div class="search-item keyword-item"><label>キーワード</label><div class="input-wrapper"><input type="text" id="keywordInput" oninput="updateKeyword(this.value)" placeholder="名前/スキル/効果..."><span class="main-clear-btn" onclick="updateKeyword('')">×</span></div></div>`;
             
@@ -687,7 +688,7 @@
             filterKeys.forEach(k => {
                 if (onlyCV && k !== 'cv') return;
                 let opts = [];
-                const skillKeys = { sSpType: 'spType', sTrigger: 'trigger', sTag: 'tag' };
+                const skillKeys = { sPriority: 'priority', sSpType: 'spType', sTrigger: 'trigger', sTag: 'tag' };
 
                 if (k === 'star') opts = [...MASTER_ORDER_STAR];
                 else if (k === 'rank') opts = [...MASTER_ORDER_RANK];
